@@ -1,68 +1,143 @@
-# MediCare — Guide d'installation XAMPP
+# 🏥 MediCare — Hospital Management System
 
-## Stack technique
-- **Frontend** : HTML5 + CSS3 + JavaScript (vanilla, fetch API)
-- **Backend** : PHP 8 (OOP, classes Repository, PDO)
-- **Base de données** : MySQL (via phpMyAdmin)
-- **Serveur** : Apache (XAMPP)
+A full-stack hospital management web application built with **PHP 8 MVC**, **MySQL**, and **Vanilla JavaScript**. It allows administrators to manage hospitals, doctors, patients, and appointments through a clean and responsive SPA interface.
 
 ---
 
-## Installation en 4 étapes
+## 🚀 Tech Stack
 
-### Étape 1 — Démarrer XAMPP
-1. Ouvrir le panneau de contrôle XAMPP
-2. Démarrer **Apache** et **MySQL**
-
-### Étape 2 — Créer la base de données
-1. Ouvrir votre navigateur → `http://localhost/phpmyadmin`
-2. Cliquer sur **"Importer"** dans la barre du haut
-3. Cliquer sur **"Choisir un fichier"** → sélectionner `sql/medicare.sql`
-4. Cliquer sur **"Exécuter"**
-5. ✅ La base `medicare` est créée avec toutes les tables et données de test
-
-### Étape 3 — Copier le projet dans htdocs
-Copier tout le dossier `medapp2/` dans :
-```
-C:\xampp\htdocs\medapp2\         (Windows)
-/opt/lampp/htdocs/medapp2/       (Linux)
-/Applications/XAMPP/htdocs/medapp2/  (Mac)
-```
-
-### Étape 4 — Ouvrir l'application
-Dans votre navigateur : `http://localhost/medapp2/`
+| Layer | Technology |
+|-------|-----------|
+| Frontend | HTML5, CSS3, JavaScript (Vanilla, Fetch API) |
+| Backend | PHP 8 (OOP, MVC pattern, PDO) |
+| Database | MySQL |
+| Server | Apache (XAMPP) |
 
 ---
 
-## Structure du projet
+## ✨ Features
+
+- 📊 **Dashboard** — Overview with statistics (hospitals, doctors, patients, appointments)
+- 🏥 **Hospitals** — Full CRUD with region, city, type, and capacity management
+- 👨‍⚕️ **Doctors** — Manage doctors linked to hospitals with specialties
+- 🧑‍💼 **Patients** — Patient records with medical info (blood type, CIN, etc.)
+- 📅 **Appointments** — 4-step wizard to book appointments with busy-slot detection
+- 🔌 **REST API** — Full JSON API for all modules
+- 🌍 **Tunisian regions** — Localized for Tunisia (24 governorates)
+
+---
+
+## 🗂️ Project Structure
+
 ```
-medapp2/
-├── index.html                  ← Page principale (SPA)
-├── css/
-│   └── style.css               ← Thème médical bleu/teal
-├── js/
-│   ├── utils/
-│   │   └── api.js              ← Client fetch() vers PHP
-│   ├── modules/
-│   │   ├── dashboard.js
-│   │   ├── rendezvous.js       ← Module 1 (wizard 4 étapes)
-│   │   └── all_modules.js      ← Patients, Médecins, Hôpitaux
-│   └── app.js                  ← Router + Modal + Toast
-├── api/
-│   ├── hopitaux.php            ← CRUD Hôpitaux (OOP + PDO)
-│   ├── medecins.php            ← CRUD Médecins + horaires
-│   ├── patients.php            ← CRUD Patients
-│   └── rendezvous.php          ← Jointure N-N (Module 1)
+hospital-management-system-main/
+├── app/
+│   ├── Controllers/
+│   │   ├── DashboardController.php
+│   │   ├── HopitauxController.php
+│   │   ├── MedecinsController.php
+│   │   ├── PatientsController.php
+│   │   └── RendezVousController.php
+│   ├── Core/
+│   │   ├── Controller.php
+│   │   ├── Database.php
+│   │   ├── Model.php
+│   │   ├── Router.php
+│   │   └── Validator.php
+│   ├── Models/
+│   │   ├── Hopital.php
+│   │   ├── Medecin.php
+│   │   ├── Patient.php
+│   │   └── RendezVous.php
+│   └── Views/
+│       ├── layouts/main.php
+│       ├── dashboard/
+│       ├── hopitaux/
+│       ├── medecins/
+│       ├── patients/
+│       └── rendezvous/
 ├── config/
-│   ├── database.php            ← Singleton PDO
-│   └── api_helper.php          ← Headers + helpers JSON
-└── sql/
-    └── medicare.sql            ← Schéma + données de test
+│   └── database.php
+├── public/
+│   ├── index.php          ← Entry point
+│   ├── css/style.css
+│   └── js/
+│       ├── app.js
+│       ├── utils/api.js
+│       └── modules/
+│           ├── dashboard.js
+│           ├── hopitaux.js
+│           ├── medecins.js
+│           ├── patients.js
+│           └── rendezvous.js
+├── sql/
+│   └── medicare.sql       ← Database schema + test data
+├── .htaccess
+└── README.md
 ```
 
 ---
 
-## Modèle de données (Diagramme)
+## ⚙️ Installation
+
+### Prerequisites
+- [XAMPP](https://www.apachefriends.org/) with Apache and MySQL
+- PHP 8.0+
+
+---
+
+### Step 1 — Start XAMPP
+Open the XAMPP Control Panel and start **Apache** and **MySQL**.
+
+---
+
+### Step 2 — Clone the repository
+```bash
+git clone https://github.com/ilyes-sad/hospital-management-system.git
+```
+Place the project folder in your XAMPP htdocs directory:
+```
+C:\xaammpp\htdocs\hospital-management-system-main\       (Windows)
+/opt/lampp/htdocs/hospital-management-system-main/        (Linux)
+/Applications/XAMPP/htdocs/hospital-management-system-main/  (Mac)
+```
+
+---
+
+### Step 3 — Import the database
+1. Open your browser → `http://localhost/phpmyadmin`
+2. Click **"Import"** in the top menu
+3. Click **"Choose file"** → select `sql/medicare.sql`
+4. Click **"Execute"**
+5. ✅ The `medicare` database is created with all tables and test data
+
+---
+
+### Step 4 — Configure the base URL
+
+In `app/Views/layouts/main.php`, set the correct base URL on line 2:
+```php
+$baseUrl = '/hospital-management-system-main/public';
+```
+
+In `public/js/utils/api.js`, update the fallback URL on line 7:
+```javascript
+const BASE = (typeof BASE_URL !== 'undefined' ? BASE_URL : '/hospital-management-system-main/public') + '/api';
+```
+
+---
+
+### Step 5 — Open the application
+```
+http://localhost/hospital-management-system-main/public/
+```
+
+> ⚠️ If XAMPP runs on a custom port (e.g. 90), use:
+> `http://localhost:90/hospital-management-system-main/public/`
+
+---
+
+## 🗄️ Database Schema
 
 ```
 hopitaux (id, nom, ville, region, type, lits, telephone)
@@ -70,50 +145,90 @@ hopitaux (id, nom, ville, region, type, lits, telephone)
     | 1..N
     |
 medecins (id, prenom, nom, specialite, hopital_id, telephone, email)
-    |                |
-    |                | 1..N
-    |                |
-    |        horaires_medecin (id, medecin_id, heure)
     |
     | N
     |
 rendez_vous (id, patient_id, medecin_id, hopital_id, date_rdv, heure, motif, statut)
-    |                                                      [TABLE DE JOINTURE N-N]
+    |
     | N
     |
 patients (id, prenom, nom, cin, date_naissance, sexe, groupe_sanguin, telephone, email, ville)
 ```
 
-**Relation N-N :** Un patient peut avoir plusieurs médecins (via rendez_vous), et un médecin peut avoir plusieurs patients.
+**N-N Relationship:** A patient can have multiple doctors (via `rendez_vous`), and a doctor can have multiple patients.
 
 ---
 
-## API REST — Endpoints
+## 🔌 REST API Endpoints
 
-| Méthode | URL | Action |
-|---------|-----|--------|
-| GET | `api/rendezvous.php` | Liste tous les RDV (avec jointures) |
-| GET | `api/rendezvous.php?id=1` | Un RDV par ID |
-| GET | `api/rendezvous.php?stats=1` | Statistiques globales |
-| GET | `api/rendezvous.php?busy_slots=1&medecin_id=1&date=2026-03-25` | Créneaux pris |
-| POST | `api/rendezvous.php` | Créer un RDV |
-| PUT | `api/rendezvous.php?id=1` | Modifier un RDV |
-| DELETE | `api/rendezvous.php?id=1` | Supprimer un RDV |
+### Hospitals
+| Method | URL | Action |
+|--------|-----|--------|
+| GET | `/api/hopitaux` | List all hospitals |
+| GET | `/api/hopitaux/{id}` | Get hospital by ID |
+| GET | `/api/hopitaux/regions` | List all regions |
+| GET | `/api/hopitaux/by-region?region=Tunis` | Filter by region |
+| POST | `/api/hopitaux` | Create hospital |
+| PUT | `/api/hopitaux/{id}` | Update hospital |
+| DELETE | `/api/hopitaux/{id}` | Delete hospital |
 
-Même structure pour `hopitaux.php`, `medecins.php`, `patients.php`.
+### Doctors
+| Method | URL | Action |
+|--------|-----|--------|
+| GET | `/api/medecins` | List all doctors |
+| GET | `/api/medecins/{id}` | Get doctor by ID |
+| GET | `/api/medecins/specialites` | List specialties |
+| GET | `/api/medecins/by-hopital?hopital_id=1` | Filter by hospital |
+| POST | `/api/medecins` | Create doctor |
+| PUT | `/api/medecins/{id}` | Update doctor |
+| DELETE | `/api/medecins/{id}` | Delete doctor |
+
+### Patients
+| Method | URL | Action |
+|--------|-----|--------|
+| GET | `/api/patients` | List all patients |
+| GET | `/api/patients/{id}` | Get patient by ID |
+| GET | `/api/patients/search?q=name` | Search patients |
+| POST | `/api/patients` | Create patient |
+| PUT | `/api/patients/{id}` | Update patient |
+| DELETE | `/api/patients/{id}` | Delete patient |
+
+### Appointments
+| Method | URL | Action |
+|--------|-----|--------|
+| GET | `/api/rendezvous` | List all appointments |
+| GET | `/api/rendezvous/{id}` | Get appointment by ID |
+| GET | `/api/rendezvous/stats` | Global statistics |
+| GET | `/api/rendezvous/busy-slots?medecin_id=1&date=2026-04-13` | Get busy slots |
+| POST | `/api/rendezvous` | Create appointment |
+| PUT | `/api/rendezvous/{id}` | Update appointment |
+| DELETE | `/api/rendezvous/{id}` | Delete appointment |
 
 ---
 
-## Problèmes fréquents
+## 🛠️ Common Issues
 
-**"Connexion DB échouée"**
-→ Vérifier que MySQL est démarré dans XAMPP
-→ Vérifier `config/database.php` : DB_USER='root', DB_PASS=''
+**500 Internal Server Error**
+→ Check that MySQL is running in XAMPP
+→ Check `config/database.php`: `DB_USER='root'`, `DB_PASS=''`
+→ Make sure the `medicare` database has been imported
 
-**Page blanche ou erreur 404**
-→ Vérifier que le dossier est bien dans `htdocs/`
-→ URL correcte : `http://localhost/medapp2/`
+**404 on CSS/JS files**
+→ Check that `$baseUrl` in `main.php` matches your folder name
+→ Make sure `.htaccess` has the correct `RewriteBase`
 
-**"Access-Control-Allow-Origin"**
-→ Normal si vous ouvrez `index.html` directement (file://)
-→ Toujours passer par `http://localhost/...`
+**Redirect loop / ERR_TOO_MANY_REDIRECTS**
+→ Make sure you have TWO `.htaccess` files: one at the root and one inside `public/`
+→ See the `.htaccess` configuration section above
+
+**"Access-Control-Allow-Origin" error**
+→ Never open `index.html` directly via `file://`
+→ Always use `http://localhost/...`
+
+
+
+---
+
+## 📄 License
+
+This project is for educational purposes.
