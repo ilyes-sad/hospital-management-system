@@ -1,0 +1,12 @@
+RewriteEngine On
+RewriteBase /hospital-management-system-main/public/
+
+# Serve existing files directly
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Forward everything to public/index.php
+RewriteRule ^(.*)$ public/index.php [QSA,L]
