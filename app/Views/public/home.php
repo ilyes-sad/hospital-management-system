@@ -600,6 +600,7 @@ $medecins = $medecins ?? [];
                 <a href="<?= $baseUrl ?>/public">Accueil</a>
                 <a href="<?= $baseUrl ?>/public/doctors">Médecins</a>
                 <a href="<?= $baseUrl ?>/public/book">Rendez-vous</a>
+                <a href="<?= $baseUrl ?>/public/map">Carte</a>
                 <a href="<?= $baseUrl ?>/public/portal" class="btn-nav">Espace Patient</a>
             </nav>
         </div>

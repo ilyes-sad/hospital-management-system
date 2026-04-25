@@ -224,6 +224,16 @@ class PublicController extends Controller
         $this->sendSuccess($slots);
     }
 
+    public function map(): void
+    {
+        $hopitaux = $this->hopitalModel->findAllWithCoords();
+        
+        $this->view('public/map', [
+            'pageTitle' => 'Carte des Hôpitaux',
+            'hopitaux' => $hopitaux,
+        ]);
+    }
+
     private function firstError(): string
     {
         return !empty($this->errors) ? reset($this->errors) : 'Erreur';

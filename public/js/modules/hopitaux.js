@@ -84,10 +84,35 @@ const REGIONS=['Ariana','Béja','Ben Arous','Bizerte','Gabès','Gafsa','Jendouba
         <div class="form-group"><label class="form-label">Lits</label><input type="number" class="form-control" id="hf-lits" value="${v.lits||''}" min="0"/></div>
       </div>
       <div class="form-group"><label class="form-label">Telephone</label><input type="text" class="form-control" id="hf-tel" value="${v.telephone||''}"/></div>
+      <div class="form-group">
+        <label class="form-label">Localisation</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="form-control" id="hf-lat" placeholder="Latitude" value="${v.latitude||''}"/>
+          <input type="text" class="form-control" id="hf-lng" placeholder="Longitude" value="${v.longitude||''}"/>
+        </div>
+        <div id="hopital-map" style="height:200px;margin-top:10px;border-radius:8px;border:1px solid var(--border)"></div>
+        <small style="color:var(--text-secondary)">Cliquez sur la carte pour sélectionner la position</small>
+      </div>
       <div class="form-actions">
         <button class="btn btn-outline" onclick="Modal.close()">Annuler</button>
         <button class="btn btn-primary" onclick="HopitauxModule.save('${v.id||''}')">Enregistrer</button>
-      </div>`;
+      </div>
+      <script>
+      (function(){
+        if(typeof L==='undefined')return;
+        var lat=${v.latitude||34.020882},lng=${v.longitude||-6.841650};
+        var map=L.map('hopital-map').setView([lat,lng],12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(map);
+        var marker=null;
+        if(lat&&lng){marker=L.marker([lat,lng]).addTo(map);}
+        map.on('click',function(e){
+          if(marker)map.removeLayer(marker);
+          marker=L.marker(e.latlng).addTo(map);
+          document.getElementById('hf-lat').value=e.latlng.lat.toFixed(6);
+          document.getElementById('hf-lng').value=e.latlng.lng.toFixed(6);
+        });
+      })();
+      <\/script>`;
   }
 
   async function save(id){
@@ -95,7 +120,14 @@ const REGIONS=['Ariana','Béja','Ben Arous','Bizerte','Gabès','Gafsa','Jendouba
     const region=document.getElementById('hf-region').value;
     const ville=document.getElementById('hf-ville').value.trim();
     if(!nom||!region||!ville){showToast('Champs obligatoires manquants','error');return;}
-    const data={nom,region,ville,type:document.getElementById('hf-type').value,lits:parseInt(document.getElementById('hf-lits').value)||0,telephone:document.getElementById('hf-tel').value.trim()};
+    const data={
+      nom,region,ville,
+      type:document.getElementById('hf-type').value,
+      lits:parseInt(document.getElementById('hf-lits').value)||0,
+      telephone:document.getElementById('hf-tel').value.trim(),
+      latitude:document.getElementById('hf-lat').value||null,
+      longitude:document.getElementById('hf-lng').value||null
+    };
     const res=id?await Api.Hopitaux.update(id,data):await Api.Hopitaux.create(data);
     if(handleApiError(res))return;
     Modal.close(); showToast(id?'Hopital mis a jour':'Hopital ajoute','success'); render();

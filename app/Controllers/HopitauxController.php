@@ -48,6 +48,8 @@ class HopitauxController extends Controller
             'type'      => $_POST['type']      ?? 'Public',
             'lits'      => $_POST['lits']      ?? '0',
             'telephone' => $_POST['telephone'] ?? '',
+            'latitude'  => $_POST['latitude']  ?? null,
+            'longitude' => $_POST['longitude'] ?? null,
         ];
 
         $validated = $this->validate($data, [
@@ -99,6 +101,8 @@ class HopitauxController extends Controller
             'type'      => $_POST['type']      ?? 'Public',
             'lits'      => $_POST['lits']      ?? '0',
             'telephone' => $_POST['telephone'] ?? '',
+            'latitude'  => $_POST['latitude']  ?? null,
+            'longitude' => $_POST['longitude'] ?? null,
         ];
 
         $validated = $this->validate($data, [
@@ -127,6 +131,18 @@ class HopitauxController extends Controller
     {
         $this->model->delete((int) $id);
         $this->redirect('/hopitaux');
+    }
+
+    public function map(): void
+    {
+        $hopitaux = $this->model->findAllWithStats();
+        
+        $this->layout('main', 'hopitaux/map', [
+            'pageTitle'    => 'Carte des Hôpitaux',
+            'pageSub'     => 'Localisation',
+            'activeModule' => 'hopitaux',
+            'hopitaux'    => $hopitaux,
+        ]);
     }
 
     // ---- API ENDPOINTS (for AJAX) ----
@@ -176,6 +192,8 @@ class HopitauxController extends Controller
         }
 
         $validated['lits'] = (int) ($validated['lits'] ?? 0);
+        if (empty($validated['latitude'])) $validated['latitude'] = null;
+        if (empty($validated['longitude'])) $validated['longitude'] = null;
         $id = $this->model->create($validated);
         $this->sendSuccess($this->model->findById($id), 'Hopital cree');
     }
@@ -197,6 +215,8 @@ class HopitauxController extends Controller
         }
 
         $validated['lits'] = (int) ($validated['lits'] ?? 0);
+        if (empty($validated['latitude'])) $validated['latitude'] = null;
+        if (empty($validated['longitude'])) $validated['longitude'] = null;
         $this->model->update((int) $id, $validated);
         $this->sendSuccess($this->model->findById((int) $id), 'Hopital mis a jour');
     }

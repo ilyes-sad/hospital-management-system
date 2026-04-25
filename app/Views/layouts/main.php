@@ -10,6 +10,8 @@ $baseUrl = '/hospital-management-system-main/public';
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="<?= $baseUrl ?>/css/style.css"/>
 </head>
 <body>
@@ -45,6 +47,10 @@ $baseUrl = '/hospital-management-system-main/public';
         <a href="#" data-module="hopitaux" class="nav-item">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V13h6v8"/></svg>
             <span>Hopitaux</span>
+        </a>
+        <a href="<?= $baseUrl ?>/public/map" target="_blank" class="nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 6v16h22"/><path d="M5 2v4"/><path d="M19 2v4"/><path d="M5 22v-4"/><path d="M19 22v-4"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Carte</span>
         </a>
     </nav>
     <div class="sidebar-footer">

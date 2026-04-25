@@ -32,4 +32,10 @@ class Hopital extends Model
         $stmt->execute([$region]);
         return $stmt->fetchAll();
     }
+
+    public function findAllWithCoords(): array
+    {
+        $stmt = $this->db->query("SELECT * FROM {$this->table} ORDER BY nom");
+        return $stmt->fetchAll();
+    }
 }

@@ -49,6 +49,7 @@ $router->post('/public/book', [PublicController::class, 'storeRdv']);
 $router->get('/public/appointment/{id}', [PublicController::class, 'appointment']);
 $router->get('/public/portal', [PublicController::class, 'portal']);
 $router->post('/public/portal', [PublicController::class, 'portalSearch']);
+$router->get('/public/map', [PublicController::class, 'map']);
 
 // ---- WEB ROUTES ----
 $router->get('/', [DashboardController::class, 'index']);
@@ -60,6 +61,7 @@ $router->post('/hopitaux/store', [HopitauxController::class, 'store']);
 $router->get('/hopitaux/edit/{id}', [HopitauxController::class, 'edit']);
 $router->post('/hopitaux/update/{id}', [HopitauxController::class, 'update']);
 $router->post('/hopitaux/delete/{id}', [HopitauxController::class, 'delete']);
+$router->get('/hopitaux/map', [HopitauxController::class, 'map']);
 
 $router->get('/medecins', [MedecinsController::class, 'index']);
 $router->get('/medecins/create', [MedecinsController::class, 'create']);

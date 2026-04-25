@@ -83,3 +83,37 @@ function hopError(string $field, array $errors): string {
         <span class="field-error"><?= htmlspecialchars(hopError('telephone', $errors)) ?></span>
     <?php endif; ?>
 </div>
+
+<div class="form-group">
+    <label class="form-label">Localisation</label>
+    <div style="display:flex;gap:12px">
+        <input type="text" class="form-control" placeholder="Latitude" id="hf-lat" name="latitude"
+               value="<?= hopOld('latitude', $old ?? [], $hopital ?? null) ?>" style="flex:1"/>
+        <input type="text" class="form-control" placeholder="Longitude" id="hf-lng" name="longitude"
+               value="<?= hopOld('longitude', $old ?? [], $hopital ?? null) ?>" style="flex:1"/>
+    </div>
+    <div id="hopital-map" style="height:250px;border-radius:8px;margin-top:12px;border:1px solid var(--border)"></div>
+    <small style="color:var(--text-secondary);display:block;margin-top:6px">Cliquez sur la carte pour sélectionner la position</small>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    if(typeof L==='undefined')return;
+    var defaultLat=<?= !empty($hopital['latitude']) ? $hopital['latitude'] : 34.020882 ?>;
+    var defaultLng=<?= !empty($hopital['longitude']) ? $hopital['longitude'] : -6.841650 ?>;
+    var map=L.map('hopital-map').setView([defaultLat,defaultLng],12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution:'© OpenStreetMap',maxZoom:19
+    }).addTo(map);
+    var marker=null;
+    if(defaultLat&&defaultLng){
+        marker=L.marker([defaultLat,defaultLng]).addTo(map);
+    }
+    map.on('click',function(e){
+        if(marker)map.removeLayer(marker);
+        marker=L.marker(e.latlng).addTo(map);
+        document.getElementById('hf-lat').value=e.latlng.lat.toFixed(6);
+        document.getElementById('hf-lng').value=e.latlng.lng.toFixed(6);
+    });
+});
+</script>
