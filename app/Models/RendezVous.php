@@ -146,4 +146,12 @@ class RendezVous extends Model
         $stmt->execute([$limit]);
         return $stmt->fetchAll();
     }
+
+    public function findByPatient(int $patientId): array
+    {
+        $sql  = $this->baseQuery() . " WHERE r.patient_id = ? ORDER BY r.date_rdv DESC, r.heure DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$patientId]);
+        return $stmt->fetchAll();
+    }
 }

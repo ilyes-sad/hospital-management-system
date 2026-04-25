@@ -26,6 +26,7 @@ require ROOT_PATH . 'app/Controllers/HopitauxController.php';
 require ROOT_PATH . 'app/Controllers/MedecinsController.php';
 require ROOT_PATH . 'app/Controllers/PatientsController.php';
 require ROOT_PATH . 'app/Controllers/RendezVousController.php';
+require ROOT_PATH . 'app/Controllers/PublicController.php';
 
 require ROOT_PATH . 'app/helpers.php';
 
@@ -39,6 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $router = new Router();
+
+// ---- PUBLIC FRONT OFFICE ----
+$router->get('/public', [PublicController::class, 'index']);
+$router->get('/public/doctors', [PublicController::class, 'doctors']);
+$router->get('/public/book', [PublicController::class, 'book']);
+$router->post('/public/book', [PublicController::class, 'storeRdv']);
+$router->get('/public/appointment/{id}', [PublicController::class, 'appointment']);
+$router->get('/public/portal', [PublicController::class, 'portal']);
+$router->post('/public/portal', [PublicController::class, 'portalSearch']);
 
 // ---- WEB ROUTES ----
 $router->get('/', [DashboardController::class, 'index']);
@@ -106,7 +116,11 @@ $router->post('/api/patients', [PatientsController::class, 'apiStore']);
 $router->put('/api/patients/{id}', [PatientsController::class, 'apiUpdate']);
 $router->delete('/api/patients/{id}', [PatientsController::class, 'apiDelete']);
 
-// Strip /medapp2/public from URI
+// ---- PUBLIC API ----
+$router->get('/api/public/doctors', [PublicController::class, 'apiDoctors']);
+$router->get('/api/public/busy-slots', [PublicController::class, 'apiBusySlots']);
+
+// Strip /hospital-management-system-main/public from URI
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
 $scriptName = basename($_SERVER['SCRIPT_NAME']);

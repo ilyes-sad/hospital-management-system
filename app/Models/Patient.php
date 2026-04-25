@@ -31,4 +31,11 @@ class Patient extends Model
         $stmt->execute([$like, $like, $like, $like]);
         return $stmt->fetchAll();
     }
+
+    public function findByCin(string $cin): array|false
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE cin = ?");
+        $stmt->execute([$cin]);
+        return $stmt->fetch();
+    }
 }

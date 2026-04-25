@@ -68,6 +68,19 @@ class Medecin extends Model
         return array_column($stmt->fetchAll(), 'specialite');
     }
 
+    public function findBySpecialite(string $specialite): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT m.*, h.nom AS hopital_nom, h.ville AS hopital_ville
+            FROM {$this->table} m
+            JOIN hopitaux h ON h.id = m.hopital_id
+            WHERE m.specialite = ?
+            ORDER BY m.nom
+        ");
+        $stmt->execute([$specialite]);
+        return $stmt->fetchAll();
+    }
+
     private function getHoraires(int $medecinId): array
     {
         $stmt = $this->db->prepare("SELECT heure FROM horaires_medecin WHERE medecin_id = ? ORDER BY heure");
