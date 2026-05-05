@@ -15,34 +15,42 @@ $prioriteOptions = $prioriteOptions ?? [];
     <link rel="stylesheet" href="/hospital-management-system/public/css/style.css">
     <link rel="stylesheet" href="/hospital-management-system/app/Views/frontoffise/reclamation_form.css">
     <style>
-        .priority-dot {
+        /* ── Pastille de priorité dans la colonne ID ── */
+        .prio-dot {
             display: inline-block;
-            width: 10px; height: 10px;
+            width: 9px; height: 9px;
             border-radius: 50%;
+            vertical-align: middle;
             margin-right: 5px;
             flex-shrink: 0;
         }
-        .priority-haute   { background: var(--danger); }
-        .priority-moyenne { background: var(--warning); }
-        .priority-basse   { background: var(--success); }
+        .prio-dot.haute   { background: #EF4444; box-shadow: 0 0 0 0 rgba(239,68,68,.6); animation: pulse-red 1.4s infinite; }
+        .prio-dot.moyenne { background: #F59E0B; }
+        .prio-dot.basse   { background: #10B981; }
 
-        .row-priority-haute   { border-left: 3px solid var(--danger); }
-        .row-priority-moyenne { border-left: 3px solid var(--warning); }
-        .row-priority-basse   { border-left: 3px solid var(--success); }
+        @keyframes pulse-red {
+            0%   { box-shadow: 0 0 0 0   rgba(239,68,68,.6); }
+            70%  { box-shadow: 0 0 0 7px rgba(239,68,68,0);  }
+            100% { box-shadow: 0 0 0 0   rgba(239,68,68,0);  }
+        }
 
+        /* ── Dropdown inline priorité ── */
         .priority-select {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 4px 10px;
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: .78rem;
+            font-size: .76rem;
             font-weight: 600;
             cursor: pointer;
             border: none;
-            background: transparent;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
         }
-        .priority-select.haute   { background: var(--danger-light);  color: var(--danger); }
-        .priority-select.moyenne { background: var(--warning-light); color: var(--warning); }
-        .priority-select.basse   { background: var(--success-light); color: var(--success); }
+        .priority-select.haute   { background: #FEE2E2; color: #DC2626; }
+        .priority-select.moyenne { background: #FEF3C7; color: #D97706; }
+        .priority-select.basse   { background: #D1FAE5; color: #059669; }
+        .priority-select:focus   { box-shadow: 0 0 0 2px rgba(14,165,233,.3); }
     </style>
 </head>
 <body class="page-body">
@@ -208,8 +216,15 @@ $prioriteOptions = $prioriteOptions ?? [];
                                 // Only show priority on active (non-closed) complaints
                                 $isActive = !StatutReclamation::isFinal($statut);
                             ?>
-                            <tr class="row-priority-<?= htmlspecialchars($priorite) ?>">
-                                <td><a href="/reclamations/<?= $rid ?>" style="font-weight:600">#<?= $rid ?></a></td>
+                            <tr>
+                                <td>
+                                    <?php if ($isActive): ?>
+                                        <!-- Pastille animée collée au numéro -->
+                                        <span class="prio-dot <?= htmlspecialchars($priorite) ?>"
+                                              title="Priorité : <?= htmlspecialchars($r->getPrioriteLabel()) ?>"></span>
+                                    <?php endif; ?>
+                                    <a href="/reclamations/<?= $rid ?>" style="font-weight:600">#<?= $rid ?></a>
+                                </td>
                                 <td>
                                     <?php if ($isActive): ?>
                                         <!-- Inline priority changer -->
