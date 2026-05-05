@@ -26,7 +26,7 @@
                             id="email"
                             type="email"
                             name="email"
-                            value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
+                           value="<?= htmlspecialchars($_POST['email'] ?? $_COOKIE['user_email'] ?? '') ?>"
                             placeholder="exemple@email.com"
                             required
                         >
@@ -52,6 +52,12 @@
                         <small class="error"><?= htmlspecialchars($errors['motDePasse']) ?></small>
                     <?php endif; ?>
                 </div>
+                <div class="form-group remember-me">
+    <label>
+        <input type="checkbox" name="remember_me" value="1">
+        Se souvenir de moi
+    </label>
+</div>
                 
                 <button type="submit" class="auth-btn auth-btn-login">
                     Se connecter

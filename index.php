@@ -100,6 +100,10 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
         $controller = new UserController();
         $controller->sendResetCode();
         break;
+        
+        case 'onlineUsers':
+        $controller->onlineUsers();
+        break;
 
         case 'resetPassword':
         require_once 'controllers/UserController.php';

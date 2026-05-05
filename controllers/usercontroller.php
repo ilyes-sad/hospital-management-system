@@ -373,57 +373,94 @@ private function getIdFromUrl(): ?int
         $this->redirect('index.php?action=register');
     }
 
-    public function login(): void
-    {
-        $errors = [];
+public function login(): void
+{   
+    $errors = [];
+    require __DIR__ . '/../views/front/user/login.php';
+}
+public function doLogin(): void
+{
+    $email = trim($_POST['email'] ?? '');
+    $motDePasse = trim($_POST['motDePasse'] ?? '');
+    $errors = [];
+
+    if ($email === '') {
+        $errors['email'] = 'L’email est obligatoire.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors['email'] = 'Email invalide.';
+    }
+
+    if ($motDePasse === '') {
+        $errors['motDePasse'] = 'Le mot de passe est obligatoire.';
+    }
+
+    if (!empty($errors)) {
         require __DIR__ . '/../views/front/user/login.php';
+        return;
     }
 
-    public function doLogin(): void
-    {
-        $email = trim($_POST['email'] ?? '');
-        $motDePasse = trim($_POST['motDePasse'] ?? '');
-        $errors = [];
+    $user = $this->userModel->login($email, $motDePasse);
 
-        if ($email === '') {
-            $errors['email'] = 'L’email est obligatoire.';
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Email invalide.';
-        }
-
-        if ($motDePasse === '') {
-            $errors['motDePasse'] = 'Le mot de passe est obligatoire.';
-        }
-
-        if (!empty($errors)) {
-            require __DIR__ . '/../views/front/user/login.php';
-            return;
-        }
-
-        $user = $this->userModel->login($email, $motDePasse);
-
-        if (!$user) {
-            $errors['general'] = 'Email ou mot de passe incorrect.';
-            require __DIR__ . '/../views/front/user/login.php';
-            return;
-        }
-
-        if ($user['statutCompte'] !== 'actif') {
-            $errors['general'] = 'Votre compte n’est pas actif.';
-            require __DIR__ . '/../views/front/user/login.php';
-            return;
-        }
-
-        unset($user['motDePasse']);
-        $_SESSION['user'] = $user;
-
-        if ($user['nomRole'] === 'admin') {
-            $this->redirect('index.php?action=index');
-        } else {
-            $this->redirect('index.php?action=profile');
-        }
+    if (!$user) {
+        $errors['general'] = 'Email ou mot de passe incorrect.';
+        require __DIR__ . '/../views/front/user/login.php';
+        return;
     }
-    public function forgotPassword()
+
+    if ($user['statutCompte'] !== 'actif') {
+        $errors['general'] = 'Votre compte n’est pas actif.';
+        require __DIR__ . '/../views/front/user/login.php';
+        return;
+    }
+
+    unset($user['motDePasse']);
+    $_SESSION['user'] = $user;
+
+    if (!empty($_POST['remember_me'])) {
+        $this->userModel->deleteRememberTokens($user['idUser']);
+        $selector = bin2hex(random_bytes(16));
+        $token = bin2hex(random_bytes(32));
+        $tokenHash = password_hash($token, PASSWORD_DEFAULT);
+        $expires = date('Y-m-d H:i:s', time() + (86400 * 30));
+
+        $this->userModel->saveRememberToken(
+            $user['idUser'],
+            $selector,
+            $tokenHash,
+            $expires
+        );
+
+        setcookie(
+            'remember_me',
+            $selector . ':' . $token,
+            time() + (86400 * 30),
+            '/',
+            '',
+            false,
+            true
+        );
+    }
+
+    if ($user['nomRole'] === 'admin') {
+        $this->redirect('index.php?action=index');
+    } else {
+        $this->redirect('index.php?action=profile');
+    }
+}
+public function onlineUsers(): void
+{
+    if (!isset($_SESSION['user']) || $_SESSION['user']['nomRole'] !== 'admin') {
+        header("Location: index.php?action=login");
+        exit;
+    }
+
+    $users = $this->userModel->getOnlineUsers();
+
+    require __DIR__ . '/../views/BackOffice/onlineUsers.php';
+}
+
+    
+public function forgotPassword()
 {
     require 'views/front/user/forgotpassword.php';
 }

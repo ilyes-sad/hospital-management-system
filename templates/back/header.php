@@ -50,6 +50,12 @@ $initials = strtoupper(substr($nom, 0, 1) . substr($prenom, 0, 1));
         <a href="#" class="nav-item">📅 Rendez-vous</a>
         <a href="#" class="nav-item">📄 Demandes</a>
         <a href="#" class="nav-item">⚠️ Réclamations</a>
+        <?php if (isset($_SESSION['user']) && $_SESSION['user']['nomRole'] === 'admin'): ?>
+    <a href="/medicare/index.php?action=onlineUsers" class="nav-item">
+    <span>👥</span>
+    <span>Utilisateurs actifs</span>
+</a>
+<?php endif; ?>
     </nav>
 
     <div class="sidebar-footer">
@@ -68,3 +74,4 @@ $initials = strtoupper(substr($nom, 0, 1) . substr($prenom, 0, 1));
 </aside>
 
 <!-- MAIN CONTENT START -->
+ <main class="admin-main">
