@@ -87,8 +87,25 @@ $editStatutChoices = StatutReclamation::getManualStatusChoices($editStatutCouran
                 </div>
 
                 <div class="field-group">
-                    <label for="statut_reclamation">Statut</label>
-                    <?php if ($editStatutFinal): ?>
+                    <label for="priorite">Priorité</label>
+                    <?php if (!StatutReclamation::isFinal($reclamation->getStatutReclamation())): ?>
+                        <select id="priorite" name="priorite"
+                                class="field-input field-select <?= isset($errors['priorite']) ? 'field-invalid' : '' ?>">
+                            <?php foreach (PrioriteReclamation::getLabels() as $pk => $pv): ?>
+                                <option value="<?= htmlspecialchars($pk) ?>"
+                                    <?= ($formData['priorite'] ?? '') === $pk ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($pv) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php else: ?>
+                        <p class="field-hint">Réclamation clôturée — priorité non modifiable.</p>
+                        <input type="hidden" name="priorite" value="<?= htmlspecialchars($reclamation->getPriorite()) ?>">
+                    <?php endif; ?>
+                </div>
+
+                <div class="field-group">
+                    <label for="statut_reclamation">Statut</label>                    <?php if ($editStatutFinal): ?>
                         <p class="field-hint"><strong><?= htmlspecialchars($reclamation->getStatutLabel()) ?></strong> — clôturée, non modifiable ici.</p>
                         <input type="hidden" name="statut_reclamation" value="<?= htmlspecialchars($editStatutCourant) ?>">
                     <?php elseif (count($editStatutChoices) <= 1): ?>

@@ -3,7 +3,8 @@ if (!isset($successMessage)) {
     $successMessage = isset($_GET['deleted']) ? 'La réclamation a été supprimée.'
         : (isset($_GET['updated']) ? 'La réclamation a été mise à jour.' : null);
 }
-$hopitalOptions = $hopitalOptions ?? [];
+$hopitalOptions  = $hopitalOptions  ?? [];
+$prioriteOptions = $prioriteOptions ?? [];
 ?>
 <!doctype html>
 <html lang="fr">
@@ -13,6 +14,36 @@ $hopitalOptions = $hopitalOptions ?? [];
     <title>Administration — Réclamations | MediCare</title>
     <link rel="stylesheet" href="/hospital-management-system/public/css/style.css">
     <link rel="stylesheet" href="/hospital-management-system/app/Views/frontoffise/reclamation_form.css">
+    <style>
+        .priority-dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+            flex-shrink: 0;
+        }
+        .priority-haute   { background: var(--danger); }
+        .priority-moyenne { background: var(--warning); }
+        .priority-basse   { background: var(--success); }
+
+        .row-priority-haute   { border-left: 3px solid var(--danger); }
+        .row-priority-moyenne { border-left: 3px solid var(--warning); }
+        .row-priority-basse   { border-left: 3px solid var(--success); }
+
+        .priority-select {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: .78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+        }
+        .priority-select.haute   { background: var(--danger-light);  color: var(--danger); }
+        .priority-select.moyenne { background: var(--warning-light); color: var(--warning); }
+        .priority-select.basse   { background: var(--success-light); color: var(--success); }
+    </style>
 </head>
 <body class="page-body">
 <div class="page-wrapper">
@@ -23,8 +54,9 @@ $hopitalOptions = $hopitalOptions ?? [];
                 <p class="page-subtitle">Liste, filtres et actions sur les dossiers.</p>
             </div>
             <div class="detail-header-actions">
-                <a href="/reclamations/stats" class="page-button page-button--secondary">Statistiques</a>
-                <a href="/reclamations/new" class="page-button">+ Nouvelle</a>
+                <a href="/reclamations/overdue" class="page-button page-button--secondary">⚠️ En retard</a>
+                <a href="/reclamations/stats"   class="page-button page-button--secondary">Statistiques</a>
+                <a href="/reclamations/new"      class="page-button">+ Nouvelle</a>
             </div>
         </div>
 
@@ -40,29 +72,54 @@ $hopitalOptions = $hopitalOptions ?? [];
                     <select name="status" id="status">
                         <option value="">Tous</option>
                         <?php foreach ($statusOptions as $k => $v): ?>
-                            <option value="<?= htmlspecialchars($k) ?>" <?= $currentFilters['status'] === $k ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
+                            <option value="<?= htmlspecialchars($k) ?>"
+                                <?= $currentFilters['status'] === $k ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($v) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
+
+                <div class="filter-row">
+                    <label for="priorite">Priorité</label>
+                    <select name="priorite" id="priorite">
+                        <option value="">Toutes</option>
+                        <?php foreach ($prioriteOptions as $k => $v): ?>
+                            <option value="<?= htmlspecialchars($k) ?>"
+                                <?= ($currentFilters['priorite'] ?? '') === $k ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($v) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
                 <div class="filter-row">
                     <label for="service">Service</label>
                     <select name="service" id="service">
                         <option value="">Tous</option>
                         <?php foreach ($services as $s): ?>
-                            <option value="<?= $s->getIdService() ?>" <?= (string)$currentFilters['service'] === (string)$s->getIdService() ? 'selected' : '' ?>><?= htmlspecialchars($s->getNomService()) ?></option>
+                            <option value="<?= $s->getIdService() ?>"
+                                <?= (string)$currentFilters['service'] === (string)$s->getIdService() ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($s->getNomService()) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
+
                 <div class="filter-row">
                     <label for="hopital">Hôpital</label>
                     <select name="hopital" id="hopital">
                         <option value="">Tous</option>
                         <option value="__empty__" <?= ($currentFilters['hopital'] ?? '') === '__empty__' ? 'selected' : '' ?>>(Non renseigné)</option>
                         <?php foreach ($hopitalOptions as $h): ?>
-                            <option value="<?= htmlspecialchars($h) ?>" <?= ($currentFilters['hopital'] ?? '') === $h ? 'selected' : '' ?>><?= htmlspecialchars($h) ?></option>
+                            <option value="<?= htmlspecialchars($h) ?>"
+                                <?= ($currentFilters['hopital'] ?? '') === $h ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($h) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
+
                 <div class="filter-row">
                     <label for="date_from">Du</label>
                     <input type="date" id="date_from" name="date_from" value="<?= htmlspecialchars($currentFilters['date_from']) ?>">
@@ -71,10 +128,14 @@ $hopitalOptions = $hopitalOptions ?? [];
                     <label for="date_to">Au</label>
                     <input type="date" id="date_to" name="date_to" value="<?= htmlspecialchars($currentFilters['date_to']) ?>">
                 </div>
+
                 <div class="filter-row filter-search">
                     <label for="search">Recherche</label>
-                    <input type="search" id="search" name="search" placeholder="Nom, e-mail, ID, objet…" value="<?= htmlspecialchars($currentFilters['search']) ?>">
+                    <input type="search" id="search" name="search"
+                           placeholder="Nom, e-mail, ID, objet…"
+                           value="<?= htmlspecialchars($currentFilters['search']) ?>">
                 </div>
+
                 <div class="filter-row">
                     <label for="sort_date">Tri date</label>
                     <select name="sort_date" id="sort_date">
@@ -82,13 +143,23 @@ $hopitalOptions = $hopitalOptions ?? [];
                         <option value="asc"  <?= $currentFilters['sort_date'] === 'asc'  ? 'selected' : '' ?>>Plus ancien</option>
                     </select>
                 </div>
+
                 <div class="filter-row">
                     <label for="sort_statut">Groupe</label>
                     <select name="sort_statut" id="sort_statut">
-                        <option value=""     <?= empty($currentFilters['sort_statut']) ? 'selected' : '' ?>>Par date</option>
-                        <option value="group" <?= ($currentFilters['sort_statut'] ?? '') === 'group' ? 'selected' : '' ?>>Par statut</option>
+                        <option value=""      <?= empty($currentFilters['sort_statut'])                    ? 'selected' : '' ?>>Par date</option>
+                        <option value="group" <?= ($currentFilters['sort_statut'] ?? '') === 'group'       ? 'selected' : '' ?>>Par statut</option>
                     </select>
                 </div>
+
+                <div class="filter-row">
+                    <label for="sort_priorite">Trier par priorité</label>
+                    <select name="sort_priorite" id="sort_priorite">
+                        <option value=""  <?= empty($currentFilters['sort_priorite']) ? 'selected' : '' ?>>Non</option>
+                        <option value="1" <?= ($currentFilters['sort_priorite'] ?? '') === '1' ? 'selected' : '' ?>>Haute → Basse</option>
+                    </select>
+                </div>
+
                 <div class="filter-actions">
                     <button type="submit" class="page-button">Filtrer</button>
                     <a href="/reclamations" class="page-button page-button--secondary">Réinitialiser</a>
@@ -103,6 +174,7 @@ $hopitalOptions = $hopitalOptions ?? [];
                     <thead>
                         <tr>
                             <th>ID</th>
+                            <th>Priorité</th>
                             <th>Date</th>
                             <th>Patient</th>
                             <th>Hôpital</th>
@@ -114,20 +186,51 @@ $hopitalOptions = $hopitalOptions ?? [];
                     </thead>
                     <tbody>
                     <?php if (empty($reclamations)): ?>
-                        <tr><td colspan="8" class="text-center py-4 text-muted">Aucune réclamation trouvée.</td></tr>
+                        <tr>
+                            <td colspan="9" style="text-align:center;padding:32px;color:var(--text-muted)">
+                                Aucune réclamation trouvée.
+                            </td>
+                        </tr>
                     <?php else: ?>
                         <?php foreach ($reclamations as $r): ?>
                             <?php
-                                $rid     = (int)$r->getIdReclamation();
-                                $statut  = $r->getStatutReclamation();
-                                $badge   = $statut === 'resolue' ? 'badge-success'
-                                         : ($statut === 'rejetee' ? 'badge-danger'
-                                         : ($statut === 'en_cours' ? 'badge-warning' : 'badge-info'));
-                                $service = $r->getServiceHospitalier();
-                                $objet   = mb_strlen($r->getObjet()) > 42 ? mb_substr($r->getObjet(), 0, 40) . '…' : $r->getObjet();
+                                $rid      = (int)$r->getIdReclamation();
+                                $statut   = $r->getStatutReclamation();
+                                $priorite = $r->getPriorite();
+                                $badge    = $statut === 'resolue'  ? 'badge-success'
+                                          : ($statut === 'rejetee' ? 'badge-danger'
+                                          : ($statut === 'en_cours'? 'badge-warning' : 'badge-info'));
+                                $pbadge   = PrioriteReclamation::getBadgeClass($priorite);
+                                $service  = $r->getServiceHospitalier();
+                                $objet    = mb_strlen($r->getObjet()) > 40
+                                          ? mb_substr($r->getObjet(), 0, 38) . '…'
+                                          : $r->getObjet();
+                                // Only show priority on active (non-closed) complaints
+                                $isActive = !StatutReclamation::isFinal($statut);
                             ?>
-                            <tr>
-                                <td>#<?= $rid ?></td>
+                            <tr class="row-priority-<?= htmlspecialchars($priorite) ?>">
+                                <td><a href="/reclamations/<?= $rid ?>" style="font-weight:600">#<?= $rid ?></a></td>
+                                <td>
+                                    <?php if ($isActive): ?>
+                                        <!-- Inline priority changer -->
+                                        <form method="post" action="/reclamations/<?= $rid ?>/priority" style="display:inline">
+                                            <select name="priorite"
+                                                    class="priority-select <?= htmlspecialchars($priorite) ?>"
+                                                    onchange="this.form.submit()"
+                                                    title="Changer la priorité">
+                                                <?php foreach (PrioriteReclamation::getLabels() as $pk => $pv): ?>
+                                                    <option value="<?= $pk ?>" <?= $priorite === $pk ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($pv) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </form>
+                                    <?php else: ?>
+                                        <span class="badge <?= $pbadge ?>" style="opacity:.6">
+                                            <?= htmlspecialchars($r->getPrioriteLabel()) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= htmlspecialchars($r->getDateDepot()->format('d/m/Y H:i')) ?></td>
                                 <td><?= htmlspecialchars($r->getNomPatient() ?: '—') ?></td>
                                 <td><?= htmlspecialchars($r->getNomHopital() ?: '—') ?></td>
@@ -142,10 +245,14 @@ $hopitalOptions = $hopitalOptions ?? [];
                                         <a href="/reclamations/<?= $rid ?>/edit" class="tbl-btn" title="Modifier">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                         </a>
+                                        <?php if ($isActive): ?>
                                         <a href="/reclamations/<?= $rid ?>#repondre" class="tbl-btn" title="Répondre" style="color:var(--success)">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                                         </a>
-                                        <form method="post" action="/reclamations/<?= $rid ?>/delete" style="display:inline" onsubmit="return confirm('Supprimer cette réclamation ?')">
+                                        <?php endif; ?>
+                                        <form method="post" action="/reclamations/<?= $rid ?>/delete"
+                                              style="display:inline"
+                                              onsubmit="return confirm('Supprimer cette réclamation ?')">
                                             <button type="submit" class="tbl-btn delete" title="Supprimer">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                                             </button>

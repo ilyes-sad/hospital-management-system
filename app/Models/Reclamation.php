@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../Core/Database.php';
 require_once __DIR__ . '/StatutReclamation.php';
 require_once __DIR__ . '/ServiceHospitalier.php';
+require_once __DIR__ . '/PrioriteReclamation.php';
 
 class Reclamation
 {
@@ -16,6 +17,7 @@ class Reclamation
     private string $emailPatient;
     private string $nomHopital;
     private ?DateTime $dateLastReminder;
+    private string $priorite;
 
     public function __construct(
         ?int $idReclamation,
@@ -27,18 +29,20 @@ class Reclamation
         string $nomPatient = '',
         string $emailPatient = '',
         string $nomHopital = '',
-        ?DateTime $dateLastReminder = null
+        ?DateTime $dateLastReminder = null,
+        string $priorite = 'moyenne'
     ) {
-        $this->idReclamation    = $idReclamation;
-        $this->dateDepot        = $dateDepot;
-        $this->objet            = $objet;
-        $this->description      = $description;
+        $this->idReclamation     = $idReclamation;
+        $this->dateDepot         = $dateDepot;
+        $this->objet             = $objet;
+        $this->description       = $description;
         $this->statutReclamation = $statutReclamation;
-        $this->idServiceHosp    = $idServiceHosp;
-        $this->nomPatient       = $nomPatient;
-        $this->emailPatient     = $emailPatient;
-        $this->nomHopital       = $nomHopital;
-        $this->dateLastReminder = $dateLastReminder;
+        $this->idServiceHosp     = $idServiceHosp;
+        $this->nomPatient        = $nomPatient;
+        $this->emailPatient      = $emailPatient;
+        $this->nomHopital        = $nomHopital;
+        $this->dateLastReminder  = $dateLastReminder;
+        $this->priorite          = $priorite;
     }
 
     public function getIdReclamation(): ?int
@@ -91,6 +95,16 @@ class Reclamation
         return $this->dateLastReminder;
     }
 
+    public function getPriorite(): string
+    {
+        return $this->priorite;
+    }
+
+    public function getPrioriteLabel(): string
+    {
+        return PrioriteReclamation::getLabels()[$this->priorite] ?? $this->priorite;
+    }
+
     public function setDateDepot(DateTime $dateDepot): void
     {
         $this->dateDepot = $dateDepot;
@@ -132,6 +146,14 @@ class Reclamation
     public function setNomHopital(string $nomHopital): void
     {
         $this->nomHopital = $nomHopital;
+    }
+
+    public function setPriorite(string $priorite): void
+    {
+        if (!in_array($priorite, PrioriteReclamation::values(), true)) {
+            throw new InvalidArgumentException('Priorité invalide.');
+        }
+        $this->priorite = $priorite;
     }
 
     public function getServiceHospitalier(): ?ServiceHospitalier
@@ -208,10 +230,11 @@ class Reclamation
             $row['description'],
             $row['statutReclamation'],
             (int)$row['idServiceHosp'],
-            isset($row['nomPatient'])  ? (string)$row['nomPatient']  : '',
-            isset($row['emailPatient']) ? (string)$row['emailPatient'] : '',
-            isset($row['nomHopital'])  ? (string)$row['nomHopital']  : '',
-            $dateLastReminder
+            isset($row['nomPatient'])    ? (string)$row['nomPatient']    : '',
+            isset($row['emailPatient'])  ? (string)$row['emailPatient']  : '',
+            isset($row['nomHopital'])    ? (string)$row['nomHopital']    : '',
+            $dateLastReminder,
+            isset($row['priorite'])      ? (string)$row['priorite']      : PrioriteReclamation::MOYENNE
         );
     }
 
@@ -223,7 +246,7 @@ class Reclamation
     public static function findFiltered(array $filters = []): array
     {
         $pdo = Database::getInstance();
-        $sql = 'SELECT idReclamation, dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital, dateLastReminder FROM reclamation';
+        $sql = 'SELECT idReclamation, dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital, dateLastReminder, priorite FROM reclamation';
         $conditions = [];
         $params = [];
 
@@ -277,6 +300,12 @@ class Reclamation
             }
         }
 
+        // Priority filter
+        if (!empty($filters['priorite']) && in_array($filters['priorite'], PrioriteReclamation::values(), true)) {
+            $conditions[] = 'priorite = :priorite';
+            $params['priorite'] = $filters['priorite'];
+        }
+
         if (count($conditions) > 0) {
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }
@@ -284,6 +313,9 @@ class Reclamation
         $sort = isset($filters['sort_date']) && $filters['sort_date'] === 'asc' ? 'ASC' : 'DESC';
         if (!empty($filters['sort_statut']) && $filters['sort_statut'] === 'group') {
             $sql .= " ORDER BY FIELD(statutReclamation, 'ouverte', 'en_cours', 'resolue', 'rejetee'), dateDepot " . $sort;
+        } elseif (!empty($filters['sort_priorite'])) {
+            // Priorité haute en premier, puis par date
+            $sql .= " ORDER BY FIELD(priorite, 'haute', 'moyenne', 'basse'), dateDepot " . $sort;
         } else {
             $sql .= ' ORDER BY dateDepot ' . $sort;
         }
@@ -360,7 +392,7 @@ class Reclamation
     {
         $pdo = Database::getInstance();
         $stmt = $pdo->prepare(
-            'SELECT idReclamation, dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital, dateLastReminder FROM reclamation WHERE idReclamation = :id LIMIT 1'
+            'SELECT idReclamation, dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital, dateLastReminder, priorite FROM reclamation WHERE idReclamation = :id LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
@@ -378,7 +410,7 @@ class Reclamation
 
         if ($this->idReclamation === null) {
             $stmt = $pdo->prepare(
-                'INSERT INTO reclamation (dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital) VALUES (:dateDepot, :objet, :description, :statutReclamation, :idServiceHosp, :nomPatient, :emailPatient, :nomHopital)'
+                'INSERT INTO reclamation (dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital, priorite) VALUES (:dateDepot, :objet, :description, :statutReclamation, :idServiceHosp, :nomPatient, :emailPatient, :nomHopital, :priorite)'
             );
             $result = $stmt->execute([
                 'dateDepot'          => $this->dateDepot->format('Y-m-d H:i:s'),
@@ -389,6 +421,7 @@ class Reclamation
                 'nomPatient'         => $this->nomPatient,
                 'emailPatient'       => $this->emailPatient,
                 'nomHopital'         => $this->nomHopital,
+                'priorite'           => $this->priorite,
             ]);
 
             if ($result) {
@@ -399,7 +432,7 @@ class Reclamation
         }
 
         $stmt = $pdo->prepare(
-            'UPDATE reclamation SET objet = :objet, description = :description, statutReclamation = :statutReclamation, idServiceHosp = :idServiceHosp, nomPatient = :nomPatient, emailPatient = :emailPatient, nomHopital = :nomHopital WHERE idReclamation = :idReclamation'
+            'UPDATE reclamation SET objet = :objet, description = :description, statutReclamation = :statutReclamation, idServiceHosp = :idServiceHosp, nomPatient = :nomPatient, emailPatient = :emailPatient, nomHopital = :nomHopital, priorite = :priorite WHERE idReclamation = :idReclamation'
         );
 
         return $stmt->execute([
@@ -410,6 +443,7 @@ class Reclamation
             'nomPatient'        => $this->nomPatient,
             'emailPatient'      => $this->emailPatient,
             'nomHopital'        => $this->nomHopital,
+            'priorite'          => $this->priorite,
             'idReclamation'     => $this->idReclamation,
         ]);
     }

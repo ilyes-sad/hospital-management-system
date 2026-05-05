@@ -22,6 +22,7 @@ require ROOT_PATH . 'app/Models/Medecin.php';
 require ROOT_PATH . 'app/Models/Patient.php';
 require ROOT_PATH . 'app/Models/RendezVous.php';
 require ROOT_PATH . 'app/Models/StatutReclamation.php';
+require ROOT_PATH . 'app/Models/PrioriteReclamation.php';
 require ROOT_PATH . 'app/Models/ServiceHospitalier.php';
 require ROOT_PATH . 'app/Models/Reclamation.php';
 require ROOT_PATH . 'app/Models/ReponseReclamation.php';
@@ -126,6 +127,7 @@ $router->get('/reclamations/{id}',                   [ReclamationController::cla
 $router->get('/reclamations/{id}/edit',              [ReclamationController::class, 'adminEdit']);
 $router->post('/reclamations/{id}/edit',             [ReclamationController::class, 'adminEdit']);
 $router->post('/reclamations/{id}/status',           [ReclamationController::class, 'adminUpdateStatus']);
+$router->post('/reclamations/{id}/priority',         [ReclamationController::class, 'adminUpdatePriority']);
 $router->post('/reclamations/{id}/respond',          [ReclamationController::class, 'adminRespond']);
 $router->post('/reclamations/{id}/send-reminder',    [ReclamationController::class, 'adminSendReminder']);
 $router->post('/reclamations/{id}/delete',           [ReclamationController::class, 'adminDelete']);

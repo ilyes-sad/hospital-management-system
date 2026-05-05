@@ -94,6 +94,14 @@ $postedReponseStatut = $postedReponseStatut ?? '';
                             <span class="badge <?= $bc ?>"><?= htmlspecialchars($reclamation->getStatutLabel()) ?></span>
                         </span>
                     </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Priorité</span>
+                        <span class="detail-value">
+                            <span class="badge <?= PrioriteReclamation::getBadgeClass($reclamation->getPriorite()) ?>">
+                                <?= htmlspecialchars($reclamation->getPrioriteLabel()) ?>
+                            </span>
+                        </span>
+                    </div>
                 </div>
 
                 <div class="detail-card detail-card--responses" style="margin-top:16px">

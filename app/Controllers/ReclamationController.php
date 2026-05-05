@@ -4,6 +4,7 @@ require_once ROOT_PATH . 'app/Models/Reclamation.php';
 require_once ROOT_PATH . 'app/Models/ReponseReclamation.php';
 require_once ROOT_PATH . 'app/Models/ServiceHospitalier.php';
 require_once ROOT_PATH . 'app/Models/StatutReclamation.php';
+require_once ROOT_PATH . 'app/Models/PrioriteReclamation.php';
 require_once ROOT_PATH . 'app/Models/ReclamationNotifier.php';
 require_once ROOT_PATH . 'app/Models/ReclamationLifecycle.php';
 
@@ -113,24 +114,27 @@ class ReclamationController extends Controller
     public function adminList(): void
     {
         $filters = [
-            'status'      => $_GET['status']     ?? '',
-            'service'     => $_GET['service']    ?? '',
-            'hopital'     => $_GET['hopital']    ?? '',
-            'search'      => trim($_GET['search'] ?? ''),
-            'date_from'   => $_GET['date_from']  ?? '',
-            'date_to'     => $_GET['date_to']    ?? '',
-            'sort_date'   => in_array($_GET['sort_date'] ?? '', ['asc', 'desc'], true) ? $_GET['sort_date'] : 'desc',
-            'sort_statut' => ($_GET['sort_statut'] ?? '') === 'group' ? 'group' : '',
+            'status'        => $_GET['status']      ?? '',
+            'service'       => $_GET['service']     ?? '',
+            'hopital'       => $_GET['hopital']     ?? '',
+            'priorite'      => $_GET['priorite']    ?? '',
+            'search'        => trim($_GET['search'] ?? ''),
+            'date_from'     => $_GET['date_from']   ?? '',
+            'date_to'       => $_GET['date_to']     ?? '',
+            'sort_date'     => in_array($_GET['sort_date'] ?? '', ['asc', 'desc'], true) ? $_GET['sort_date'] : 'desc',
+            'sort_statut'   => ($_GET['sort_statut']  ?? '') === 'group'    ? 'group'    : '',
+            'sort_priorite' => ($_GET['sort_priorite'] ?? '') === '1'       ? '1'        : '',
         ];
 
-        $reclamations   = Reclamation::findFiltered($filters);
-        $statusOptions  = StatutReclamation::getLabels();
-        $services       = ServiceHospitalier::findAll();
-        $hopitalOptions = Reclamation::distinctHopitaux();
-        $currentFilters = $filters;
+        $reclamations    = Reclamation::findFiltered($filters);
+        $statusOptions   = StatutReclamation::getLabels();
+        $prioriteOptions = PrioriteReclamation::getLabels();
+        $services        = ServiceHospitalier::findAll();
+        $hopitalOptions  = Reclamation::distinctHopitaux();
+        $currentFilters  = $filters;
 
         $this->view('backoffise/reclamations_list', compact(
-            'reclamations', 'statusOptions', 'services', 'hopitalOptions', 'currentFilters'
+            'reclamations', 'statusOptions', 'prioriteOptions', 'services', 'hopitalOptions', 'currentFilters'
         ));
     }
 
@@ -164,6 +168,7 @@ class ReclamationController extends Controller
 
         $services       = ServiceHospitalier::findAll();
         $statusOptions  = StatutReclamation::getLabels();
+        $prioriteOptions = PrioriteReclamation::getLabels();
         $errors         = [];
         $successMessage = null;
         $formData       = [
@@ -174,6 +179,7 @@ class ReclamationController extends Controller
             'nom_patient'         => $reclamation->getNomPatient(),
             'email_patient'       => $reclamation->getEmailPatient(),
             'nom_hopital'         => $reclamation->getNomHopital(),
+            'priorite'            => $reclamation->getPriorite(),
         ];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -185,6 +191,7 @@ class ReclamationController extends Controller
                 'nom_patient'         => trim($_POST['nom_patient'] ?? ''),
                 'email_patient'       => trim($_POST['email_patient'] ?? ''),
                 'nom_hopital'         => trim($_POST['nom_hopital'] ?? ''),
+                'priorite'            => trim($_POST['priorite'] ?? PrioriteReclamation::MOYENNE),
             ];
 
             $errors = Reclamation::validate($formData);
@@ -208,6 +215,9 @@ class ReclamationController extends Controller
                 $reclamation->setNomPatient($formData['nom_patient']);
                 $reclamation->setEmailPatient($formData['email_patient']);
                 $reclamation->setNomHopital($formData['nom_hopital']);
+                if (in_array($formData['priorite'], PrioriteReclamation::values(), true)) {
+                    $reclamation->setPriorite($formData['priorite']);
+                }
                 $reclamation->save();
 
                 $successMessage = 'La réclamation a été mise à jour avec succès.';
@@ -220,13 +230,14 @@ class ReclamationController extends Controller
                     'nom_patient'         => $reclamation->getNomPatient(),
                     'email_patient'       => $reclamation->getEmailPatient(),
                     'nom_hopital'         => $reclamation->getNomHopital(),
+                    'priorite'            => $reclamation->getPriorite(),
                 ];
                 $errors = [];
             }
         }
 
         $this->view('backoffise/reclamation_edit', compact(
-            'reclamation', 'services', 'statusOptions', 'formData', 'errors', 'successMessage'
+            'reclamation', 'services', 'statusOptions', 'prioriteOptions', 'formData', 'errors', 'successMessage'
         ));
     }
 
@@ -262,6 +273,32 @@ class ReclamationController extends Controller
         }
 
         $this->redirect('/reclamations/' . $id . '?updated=1');
+    }
+
+    public function adminUpdatePriority(int $id): void
+    {
+        $reclamation = Reclamation::findById($id);
+        if (!$reclamation) { $this->notFound(); return; }
+
+        $newPriorite = trim($_POST['priorite'] ?? '');
+
+        if (!in_array($newPriorite, PrioriteReclamation::values(), true)) {
+            $this->redirect('/reclamations?error=priorite_invalide');
+            return;
+        }
+
+        if (StatutReclamation::isFinal($reclamation->getStatutReclamation())) {
+            $this->redirect('/reclamations?error=reclamation_cloturee');
+            return;
+        }
+
+        $pdo  = Database::getInstance();
+        $stmt = $pdo->prepare('UPDATE reclamation SET priorite = :p WHERE idReclamation = :id');
+        $stmt->execute(['p' => $newPriorite, 'id' => $id]);
+
+        // Return to the page the user came from
+        $referer = $_SERVER['HTTP_REFERER'] ?? '/reclamations';
+        $this->redirect($referer);
     }
 
     // ----------------------------------------------------------------
