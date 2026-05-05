@@ -2,7 +2,8 @@
 // ============================================================
 //  app/Views/dashboard/index.php
 // ============================================================
-$baseUrl = '/medapp2/public';
+$scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+$baseUrl   = rtrim($scriptDir, '/');
 ?>
 
 <div class="stats-grid">

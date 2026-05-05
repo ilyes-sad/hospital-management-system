@@ -127,3 +127,46 @@ INSERT INTO rendez_vous (patient_id, medecin_id, hopital_id, date_rdv, heure, mo
 (3, 5, 3, '2026-03-24', '10:00', 'Douleur genou droit',      'confirmé'),
 (4, 6, 3, '2026-03-27', '11:00', 'Suivi grossesse',          'en attente'),
 (1, 2, 1, '2026-04-01', '15:00', 'Vaccination enfant',       'confirmé');
+
+-- ============================================================
+--  MODULE RÉCLAMATIONS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS service_hospitalier (
+    idService   INT AUTO_INCREMENT PRIMARY KEY,
+    nomService  VARCHAR(255) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO service_hospitalier (nomService) VALUES
+    ('Urgences'), ('Pédiatrie'), ('Cardiologie'), ('Maternité'),
+    ('Chirurgie'), ('Radiologie'), ('Neurologie'), ('Dermatologie');
+
+CREATE TABLE IF NOT EXISTS reclamation (
+    idReclamation       INT AUTO_INCREMENT PRIMARY KEY,
+    dateDepot           DATETIME DEFAULT CURRENT_TIMESTAMP,
+    objet               VARCHAR(255) NOT NULL,
+    description         LONGTEXT NOT NULL,
+    statutReclamation   VARCHAR(50) DEFAULT 'ouverte',
+    idServiceHosp       INT NOT NULL,
+    nomPatient          VARCHAR(255) NOT NULL DEFAULT '',
+    emailPatient        VARCHAR(255) NOT NULL DEFAULT '',
+    nomHopital          VARCHAR(255) NOT NULL DEFAULT '',
+    CONSTRAINT fk_recl_service
+        FOREIGN KEY (idServiceHosp) REFERENCES service_hospitalier(idService)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    INDEX idx_statut    (statutReclamation),
+    INDEX idx_date      (dateDepot),
+    INDEX idx_service   (idServiceHosp)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS reponse_reclamation (
+    idReponse       INT AUTO_INCREMENT PRIMARY KEY,
+    idReclamation   INT NOT NULL,
+    message         LONGTEXT NOT NULL,
+    dateReponse     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reponse_reclamation
+        FOREIGN KEY (idReclamation) REFERENCES reclamation(idReclamation)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_reclamation (idReclamation),
+    INDEX idx_date_rep    (dateReponse)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

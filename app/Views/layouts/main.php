@@ -1,5 +1,7 @@
 <?php
-$baseUrl = '/hospital-management-system-main/public';
+// Derive base URL dynamically from the script location
+$scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+$baseUrl   = rtrim($scriptDir, '/');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -45,6 +47,19 @@ $baseUrl = '/hospital-management-system-main/public';
         <a href="#" data-module="hopitaux" class="nav-item">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V13h6v8"/></svg>
             <span>Hopitaux</span>
+        </a>
+        <div class="nav-section-label" style="margin-top:12px">Réclamations</div>
+        <a href="/reclamations/new" class="nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Nouvelle réclamation</span>
+        </a>
+        <a href="/reclamations" class="nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Réclamations</span>
+        </a>
+        <a href="/reponses" class="nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Réponses</span>
         </a>
     </nav>
     <div class="sidebar-footer">

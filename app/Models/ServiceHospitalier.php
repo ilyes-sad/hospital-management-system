@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/../Core/Database.php';
 
 class ServiceHospitalier
 {
@@ -32,7 +32,7 @@ class ServiceHospitalier
 
     public static function findAll(): array
     {
-        $pdo = Database::getConnection();
+        $pdo = Database::getInstance();
         $stmt = $pdo->query('SELECT idService, nomService FROM service_hospitalier ORDER BY nomService');
         $services = [];
 
@@ -50,7 +50,7 @@ class ServiceHospitalier
 
     private static function seedDefaultServices(): void
     {
-        $pdo = Database::getConnection();
+        $pdo = Database::getInstance();
         $stmt = $pdo->prepare('INSERT INTO service_hospitalier (nomService) VALUES (:nomService)');
 
         foreach (self::DEFAULT_SERVICES as $serviceName) {
@@ -60,7 +60,7 @@ class ServiceHospitalier
 
     public static function findById(int $id): ?self
     {
-        $pdo = Database::getConnection();
+        $pdo = Database::getInstance();
         $stmt = $pdo->prepare('SELECT idService, nomService FROM service_hospitalier WHERE idService = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
