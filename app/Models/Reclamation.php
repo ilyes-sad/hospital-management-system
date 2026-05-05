@@ -15,6 +15,7 @@ class Reclamation
     private string $nomPatient;
     private string $emailPatient;
     private string $nomHopital;
+    private ?DateTime $dateLastReminder;
 
     public function __construct(
         ?int $idReclamation,
@@ -25,17 +26,19 @@ class Reclamation
         int $idServiceHosp,
         string $nomPatient = '',
         string $emailPatient = '',
-        string $nomHopital = ''
+        string $nomHopital = '',
+        ?DateTime $dateLastReminder = null
     ) {
-        $this->idReclamation = $idReclamation;
-        $this->dateDepot = $dateDepot;
-        $this->objet = $objet;
-        $this->description = $description;
+        $this->idReclamation    = $idReclamation;
+        $this->dateDepot        = $dateDepot;
+        $this->objet            = $objet;
+        $this->description      = $description;
         $this->statutReclamation = $statutReclamation;
-        $this->idServiceHosp = $idServiceHosp;
-        $this->nomPatient = $nomPatient;
-        $this->emailPatient = $emailPatient;
-        $this->nomHopital = $nomHopital;
+        $this->idServiceHosp    = $idServiceHosp;
+        $this->nomPatient       = $nomPatient;
+        $this->emailPatient     = $emailPatient;
+        $this->nomHopital       = $nomHopital;
+        $this->dateLastReminder = $dateLastReminder;
     }
 
     public function getIdReclamation(): ?int
@@ -81,6 +84,11 @@ class Reclamation
     public function getNomHopital(): string
     {
         return $this->nomHopital;
+    }
+
+    public function getDateLastReminder(): ?DateTime
+    {
+        return $this->dateLastReminder;
     }
 
     public function setDateDepot(DateTime $dateDepot): void
@@ -188,6 +196,11 @@ class Reclamation
 
     public static function fromArray(array $row): self
     {
+        $dateLastReminder = null;
+        if (!empty($row['dateLastReminder'])) {
+            try { $dateLastReminder = new DateTime($row['dateLastReminder']); } catch (Exception $e) {}
+        }
+
         return new self(
             isset($row['idReclamation']) ? (int)$row['idReclamation'] : null,
             new DateTime($row['dateDepot']),
@@ -195,9 +208,10 @@ class Reclamation
             $row['description'],
             $row['statutReclamation'],
             (int)$row['idServiceHosp'],
-            isset($row['nomPatient']) ? (string)$row['nomPatient'] : '',
+            isset($row['nomPatient'])  ? (string)$row['nomPatient']  : '',
             isset($row['emailPatient']) ? (string)$row['emailPatient'] : '',
-            isset($row['nomHopital']) ? (string)$row['nomHopital'] : ''
+            isset($row['nomHopital'])  ? (string)$row['nomHopital']  : '',
+            $dateLastReminder
         );
     }
 
@@ -209,7 +223,7 @@ class Reclamation
     public static function findFiltered(array $filters = []): array
     {
         $pdo = Database::getInstance();
-        $sql = 'SELECT idReclamation, dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital FROM reclamation';
+        $sql = 'SELECT idReclamation, dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital, dateLastReminder FROM reclamation';
         $conditions = [];
         $params = [];
 
@@ -346,7 +360,7 @@ class Reclamation
     {
         $pdo = Database::getInstance();
         $stmt = $pdo->prepare(
-            'SELECT idReclamation, dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital FROM reclamation WHERE idReclamation = :id LIMIT 1'
+            'SELECT idReclamation, dateDepot, objet, description, statutReclamation, idServiceHosp, nomPatient, emailPatient, nomHopital, dateLastReminder FROM reclamation WHERE idReclamation = :id LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();

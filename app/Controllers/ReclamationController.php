@@ -5,6 +5,7 @@ require_once ROOT_PATH . 'app/Models/ReponseReclamation.php';
 require_once ROOT_PATH . 'app/Models/ServiceHospitalier.php';
 require_once ROOT_PATH . 'app/Models/StatutReclamation.php';
 require_once ROOT_PATH . 'app/Models/ReclamationNotifier.php';
+require_once ROOT_PATH . 'app/Models/ReclamationLifecycle.php';
 
 class ReclamationController extends Controller
 {
@@ -64,6 +65,45 @@ class ReclamationController extends Controller
         $formData       = ['objet' => '', 'description' => '', 'service_hospitalier' => '', 'nom_patient' => '', 'email_patient' => '', 'nom_hopital' => ''];
         $errors         = [];
         $this->view('frontoffise/reclamation_form', compact('services', 'formData', 'errors', 'successMessage'));
+    }
+
+    // ----------------------------------------------------------------
+    //  BACK-OFFICE — OVERDUE / LIFECYCLE
+    // ----------------------------------------------------------------
+
+    public function adminOverdue(): void
+    {
+        $lifecycle   = new ReclamationLifecycle();
+        $config      = require ROOT_PATH . 'config/reclamation.php';
+        $overdue     = $lifecycle->findOverdueReclamations();
+        $overdueStats = ReclamationLifecycle::getOverdueStats();
+
+        $thresholdDays       = (int)$config['overdue_threshold_days'];
+        $reminderIntervalDays = (int)$config['reminder_interval_days'];
+        $remindersEnabled    = (bool)$config['auto_reminders_enabled'];
+
+        $this->view('backoffise/reclamations_overdue', compact(
+            'overdue', 'overdueStats', 'thresholdDays', 'reminderIntervalDays', 'remindersEnabled'
+        ));
+    }
+
+    public function adminSendAllReminders(): void
+    {
+        $lifecycle = new ReclamationLifecycle();
+        $result    = $lifecycle->processOverdueReclamations();
+
+        $this->redirect('/reclamations/overdue?reminders_sent=1&sent=' . $result['sent'] . '&failed=' . $result['failed']);
+    }
+
+    public function adminSendReminder(int $id): void
+    {
+        $reclamation = Reclamation::findById($id);
+        if (!$reclamation) { $this->notFound(); return; }
+
+        $lifecycle = new ReclamationLifecycle();
+        $sent      = $lifecycle->sendReminderForReclamation($reclamation);
+
+        $this->redirect('/reclamations/' . $id . '?reminder=' . ($sent ? 'sent' : 'failed'));
     }
 
     // ----------------------------------------------------------------

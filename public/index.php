@@ -26,6 +26,7 @@ require ROOT_PATH . 'app/Models/ServiceHospitalier.php';
 require ROOT_PATH . 'app/Models/Reclamation.php';
 require ROOT_PATH . 'app/Models/ReponseReclamation.php';
 require ROOT_PATH . 'app/Models/ReclamationNotifier.php';
+require ROOT_PATH . 'app/Models/ReclamationLifecycle.php';
 
 require ROOT_PATH . 'app/Controllers/DashboardController.php';
 require ROOT_PATH . 'app/Controllers/HopitauxController.php';
@@ -115,16 +116,19 @@ $router->put('/api/patients/{id}', [PatientsController::class, 'apiUpdate']);
 $router->delete('/api/patients/{id}', [PatientsController::class, 'apiDelete']);
 
 // ---- RECLAMATION ROUTES ----
-$router->get('/reclamations/new',              [ReclamationController::class, 'showNew']);
-$router->post('/reclamations/save',            [ReclamationController::class, 'save']);
-$router->get('/reclamations/stats',            [ReclamationController::class, 'adminDashboard']);
-$router->get('/reclamations',                  [ReclamationController::class, 'adminList']);
-$router->get('/reclamations/{id}',             [ReclamationController::class, 'adminDetail']);
-$router->get('/reclamations/{id}/edit',        [ReclamationController::class, 'adminEdit']);
-$router->post('/reclamations/{id}/edit',       [ReclamationController::class, 'adminEdit']);
-$router->post('/reclamations/{id}/status',     [ReclamationController::class, 'adminUpdateStatus']);
-$router->post('/reclamations/{id}/respond',    [ReclamationController::class, 'adminRespond']);
-$router->post('/reclamations/{id}/delete',     [ReclamationController::class, 'adminDelete']);
+$router->get('/reclamations/new',                    [ReclamationController::class, 'showNew']);
+$router->post('/reclamations/save',                  [ReclamationController::class, 'save']);
+$router->get('/reclamations/stats',                  [ReclamationController::class, 'adminDashboard']);
+$router->get('/reclamations/overdue',                [ReclamationController::class, 'adminOverdue']);
+$router->post('/reclamations/overdue/send-reminders',[ReclamationController::class, 'adminSendAllReminders']);
+$router->get('/reclamations',                        [ReclamationController::class, 'adminList']);
+$router->get('/reclamations/{id}',                   [ReclamationController::class, 'adminDetail']);
+$router->get('/reclamations/{id}/edit',              [ReclamationController::class, 'adminEdit']);
+$router->post('/reclamations/{id}/edit',             [ReclamationController::class, 'adminEdit']);
+$router->post('/reclamations/{id}/status',           [ReclamationController::class, 'adminUpdateStatus']);
+$router->post('/reclamations/{id}/respond',          [ReclamationController::class, 'adminRespond']);
+$router->post('/reclamations/{id}/send-reminder',    [ReclamationController::class, 'adminSendReminder']);
+$router->post('/reclamations/{id}/delete',           [ReclamationController::class, 'adminDelete']);
 
 // ---- REPONSE ROUTES ----
 $router->get('/reponses',                      [ReponseReclamationController::class, 'adminList']);

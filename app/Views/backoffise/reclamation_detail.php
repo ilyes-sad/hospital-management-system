@@ -41,6 +41,11 @@ $postedReponseStatut = $postedReponseStatut ?? '';
         <?php if (isset($_GET['responded'])): ?>
             <div class="message-box message-success">Réponse enregistrée et statut mis à jour.</div>
         <?php endif; ?>
+        <?php if (isset($_GET['reminder']) && $_GET['reminder'] === 'sent'): ?>
+            <div class="message-box message-success">📧 Rappel envoyé au responsable du service.</div>
+        <?php elseif (isset($_GET['reminder']) && $_GET['reminder'] === 'failed'): ?>
+            <div class="message-box message-error">❌ Échec de l'envoi du rappel. Vérifiez la configuration e-mail.</div>
+        <?php endif; ?>
         <?php if (isset($_GET['error'])): ?>
             <div class="message-box message-error"><?= htmlspecialchars($_GET['error']) ?></div>
         <?php endif; ?>
