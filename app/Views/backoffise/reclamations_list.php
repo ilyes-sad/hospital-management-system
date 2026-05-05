@@ -5,6 +5,13 @@ if (!isset($successMessage)) {
 }
 $hopitalOptions  = $hopitalOptions  ?? [];
 $prioriteOptions = $prioriteOptions ?? [];
+
+// ── Réclamations haute priorité actives (pour la cloche) ──
+$urgentes = array_filter($reclamations ?? [], fn($r) =>
+    $r->getPriorite() === PrioriteReclamation::HAUTE
+    && !StatutReclamation::isFinal($r->getStatutReclamation())
+);
+$urgentCount = count($urgentes);
 ?>
 <!doctype html>
 <html lang="fr">
@@ -51,6 +58,158 @@ $prioriteOptions = $prioriteOptions ?? [];
         .priority-select.moyenne { background: #FEF3C7; color: #D97706; }
         .priority-select.basse   { background: #D1FAE5; color: #059669; }
         .priority-select:focus   { box-shadow: 0 0 0 2px rgba(14,165,233,.3); }
+
+        /* ── Cloche de notification ── */
+        .bell-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px; height: 38px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--accent);
+            cursor: pointer;
+            transition: all .18s ease;
+            vertical-align: middle;
+        }
+        .bell-btn:hover { background: var(--accent-light); border-color: var(--accent); }
+        .bell-badge {
+            position: absolute;
+            top: -6px; right: -6px;
+            min-width: 18px; height: 18px;
+            background: #EF4444;
+            color: #fff;
+            font-size: .68rem;
+            font-weight: 700;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 4px;
+            border: 2px solid #fff;
+            animation: pulse-red 1.4s infinite;
+        }
+
+        /* ── Panneau slide-in ── */
+        .notif-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(6,15,30,.35);
+            backdrop-filter: blur(3px);
+            z-index: 8000;
+        }
+        .notif-overlay.open { display: block; }
+
+        .notif-panel {
+            position: fixed;
+            top: 0; right: -420px;
+            width: 400px; max-width: 95vw;
+            height: 100vh;
+            background: var(--bg-card);
+            box-shadow: -8px 0 32px rgba(6,15,30,.18);
+            z-index: 8001;
+            display: flex; flex-direction: column;
+            transition: right .28s cubic-bezier(.4,0,.2,1);
+            border-left: 1px solid var(--border);
+        }
+        .notif-panel.open { right: 0; }
+
+        .notif-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 22px 16px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .notif-title {
+            font-family: var(--font-display);
+            font-size: 1rem; font-weight: 700;
+            color: var(--navy);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .notif-close {
+            width: 30px; height: 30px;
+            border-radius: 6px;
+            border: none; background: none;
+            color: var(--text-muted);
+            cursor: pointer; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .15s;
+        }
+        .notif-close:hover { background: var(--danger-light); color: var(--danger); }
+
+        .notif-body { flex: 1; overflow-y: auto; padding: 16px 0; }
+
+        .notif-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 22px;
+            border-bottom: 1px solid var(--border);
+            transition: background .15s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .notif-item:hover { background: #FFF5F5; }
+        .notif-item:last-child { border-bottom: none; }
+
+        .notif-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: #FEE2E2; color: #DC2626;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: .85rem;
+            flex-shrink: 0;
+        }
+        .notif-info { flex: 1; min-width: 0; }
+        .notif-name {
+            font-weight: 600; font-size: .88rem;
+            color: var(--navy);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .notif-email {
+            font-size: .78rem; color: var(--text-muted);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-top: 1px;
+        }
+        .notif-meta {
+            display: flex; align-items: center; gap: 6px;
+            margin-top: 5px; flex-wrap: wrap;
+        }
+        .notif-date { font-size: .74rem; color: var(--text-muted); }
+        .notif-service {
+            font-size: .72rem; font-weight: 500;
+            background: var(--accent-light); color: var(--accent-dark);
+            padding: 1px 7px; border-radius: 10px;
+        }
+        .notif-objet {
+            font-size: .78rem; color: var(--text-secondary);
+            margin-top: 3px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .notif-arrow {
+            color: var(--text-muted); flex-shrink: 0;
+            align-self: center;
+        }
+
+        .notif-empty {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 60px 24px; color: var(--text-muted); text-align: center;
+        }
+        .notif-empty svg { opacity: .25; margin-bottom: 12px; }
+        .notif-empty p { font-size: .9rem; }
+
+        .notif-footer {
+            padding: 14px 22px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .notif-footer a {
+            display: block; text-align: center;
+            font-size: .83rem; font-weight: 600;
+            color: var(--accent);
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background .15s;
+        }
+        .notif-footer a:hover { background: var(--accent-light); }
     </style>
 </head>
 <body class="page-body">
@@ -64,7 +223,18 @@ $prioriteOptions = $prioriteOptions ?? [];
             <div class="detail-header-actions">
                 <a href="/reclamations/overdue" class="page-button page-button--secondary">⚠️ En retard</a>
                 <a href="/reclamations/stats"   class="page-button page-button--secondary">Statistiques</a>
-                <a href="/reclamations/new"      class="page-button">+ Nouvelle</a>
+
+                <!-- 🔔 Cloche priorité haute -->
+                <button class="bell-btn" id="bellBtn" title="Réclamations prioritaires">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zm6-6V11a6 6 0 0 0-5-5.91V4a1 1 0 0 0-2 0v1.09A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <?php if ($urgentCount > 0): ?>
+                        <span class="bell-badge"><?= $urgentCount > 99 ? '99+' : $urgentCount ?></span>
+                    <?php endif; ?>
+                </button>
+
+                <a href="/reclamations/new" class="page-button">+ Nouvelle</a>
             </div>
         </div>
 
@@ -283,5 +453,123 @@ $prioriteOptions = $prioriteOptions ?? [];
         </div>
     </div>
 </div>
+
+<!-- ══════════════════════════════════════════════
+     🔔 PANNEAU NOTIFICATIONS PRIORITÉ HAUTE
+══════════════════════════════════════════════ -->
+<div class="notif-overlay" id="notifOverlay"></div>
+
+<div class="notif-panel" id="notifPanel">
+    <div class="notif-header">
+        <div class="notif-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#EF4444">
+                <path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zm6-6V11a6 6 0 0 0-5-5.91V4a1 1 0 0 0-2 0v1.09A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2z"/>
+            </svg>
+            Priorité haute
+            <?php if ($urgentCount > 0): ?>
+                <span style="background:#EF4444;color:#fff;font-size:.72rem;font-weight:700;
+                             padding:1px 8px;border-radius:20px;margin-left:4px">
+                    <?= $urgentCount ?>
+                </span>
+            <?php endif; ?>
+        </div>
+        <button class="notif-close" id="notifClose" title="Fermer">✕</button>
+    </div>
+
+    <div class="notif-body">
+        <?php if (empty($urgentes)): ?>
+            <div class="notif-empty">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <p style="font-weight:600;margin-bottom:4px">Aucune urgence</p>
+                <p style="font-size:.82rem">Toutes les réclamations prioritaires sont traitées.</p>
+            </div>
+        <?php else: ?>
+            <?php foreach ($urgentes as $u): ?>
+                <?php
+                    $uid     = (int)$u->getIdReclamation();
+                    $unom    = $u->getNomPatient() ?: '—';
+                    $uemail  = $u->getEmailPatient() ?: '—';
+                    $udate   = $u->getDateDepot()->format('d/m/Y à H:i');
+                    $udays   = (int)(new DateTime())->diff($u->getDateDepot())->days;
+                    $userv   = $u->getServiceHospitalier();
+                    $uobjet  = mb_strlen($u->getObjet()) > 45
+                             ? mb_substr($u->getObjet(), 0, 43) . '…'
+                             : $u->getObjet();
+                    // Initiales pour l'avatar
+                    $parts   = explode(' ', trim($unom));
+                    $initials = mb_strtoupper(
+                        mb_substr($parts[0] ?? '?', 0, 1) .
+                        mb_substr($parts[1] ?? '', 0, 1)
+                    );
+                ?>
+                <a href="/reclamations/<?= $uid ?>" class="notif-item">
+                    <div class="notif-avatar"><?= htmlspecialchars($initials) ?></div>
+                    <div class="notif-info">
+                        <div class="notif-name"><?= htmlspecialchars($unom) ?></div>
+                        <div class="notif-email"><?= htmlspecialchars($uemail) ?></div>
+                        <div class="notif-objet" title="<?= htmlspecialchars($u->getObjet()) ?>">
+                            <?= htmlspecialchars($uobjet) ?>
+                        </div>
+                        <div class="notif-meta">
+                            <span class="notif-date">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                <?= htmlspecialchars($udate) ?>
+                                <span style="color:#EF4444;font-weight:600;margin-left:4px">(<?= $udays ?>j)</span>
+                            </span>
+                            <?php if ($userv): ?>
+                                <span class="notif-service"><?= htmlspecialchars($userv->getNomService()) ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="notif-arrow">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+    <?php if ($urgentCount > 0): ?>
+    <div class="notif-footer">
+        <a href="/reclamations?priorite=haute&sort_priorite=1">
+            Voir toutes les réclamations prioritaires →
+        </a>
+    </div>
+    <?php endif; ?>
+</div>
+
+<script>
+(function () {
+    var bell    = document.getElementById('bellBtn');
+    var panel   = document.getElementById('notifPanel');
+    var overlay = document.getElementById('notifOverlay');
+    var close   = document.getElementById('notifClose');
+
+    function openPanel() {
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closePanel() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    if (bell)    bell.addEventListener('click', openPanel);
+    if (close)   close.addEventListener('click', closePanel);
+    if (overlay) overlay.addEventListener('click', closePanel);
+
+    // Fermer avec Échap
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closePanel();
+    });
+})();
+</script>
+
 </body>
 </html>
+
