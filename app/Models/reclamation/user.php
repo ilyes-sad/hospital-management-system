@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../config.php';
+require_once ROOT_PATH . 'config/database.php';
 
 class User
 {
@@ -9,7 +9,7 @@ class User
 
     public function __construct()
     {
-        $this->conn = Database::connect();
+        $this->conn = Database::getInstance();
     }
     
 
@@ -162,7 +162,7 @@ public function updateProfile($id, $nom, $prenom, $email, $telephone): bool
 }
 public static function findByEmail($email)
 {
-    $db = Database::connect();
+    $db = Database::getInstance();
 
     $sql = "SELECT * FROM users WHERE email = :email LIMIT 1";
 
@@ -175,7 +175,7 @@ public static function findByEmail($email)
 }
         public static function updatePasswordf($email, $password)
 {
-    $db = Database::connect();
+    $db = Database::getInstance();
 
     $sql = "UPDATE users SET motDePasse = :password WHERE email = :email";
 

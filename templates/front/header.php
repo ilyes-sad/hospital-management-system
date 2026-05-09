@@ -4,9 +4,9 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require_once __DIR__ . '/../../config.php';
+require_once ROOT_PATH . 'config/database.php';
 
-$pdo = Database::connect();
+$pdo = Database::getInstance();
 $user = $_SESSION['users'] ?? null;
 if (isset($_SESSION['user']['idUser'])) {
     $stmt = $pdo->prepare("

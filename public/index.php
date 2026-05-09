@@ -1,6 +1,7 @@
 <?php
 // ============================================================
 //  public/index.php
+//  Front controller — all requests go through here
 // ============================================================
 
 session_start();
@@ -11,6 +12,7 @@ if (!defined('ROOT_PATH')) {
     define('ROOT_PATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 }
 
+// ---- CORE ----
 require ROOT_PATH . 'config/database.php';
 require ROOT_PATH . 'app/Core/Database.php';
 require ROOT_PATH . 'app/Core/Model.php';
@@ -18,17 +20,32 @@ require ROOT_PATH . 'app/Core/Controller.php';
 require ROOT_PATH . 'app/Core/Validator.php';
 require ROOT_PATH . 'app/Core/Router.php';
 
+// ---- MODELS ----
 require ROOT_PATH . 'app/Models/Hopital.php';
 require ROOT_PATH . 'app/Models/Medecin.php';
 require ROOT_PATH . 'app/Models/Patient.php';
 require ROOT_PATH . 'app/Models/RendezVous.php';
+require ROOT_PATH . 'app/Models/reclamation/user.php';
+require ROOT_PATH . 'app/Models/reclamation/reclamation.php';
+require ROOT_PATH . 'app/Models/reclamation/reponseReclamation.php';
+require ROOT_PATH . 'app/Models/reclamation/ReclamationNotifier.php';
+require ROOT_PATH . 'app/Models/reclamation/PrioriteReclamation.php';
+require ROOT_PATH . 'app/Models/reclamation/statutReclamation.php';
 
+// ---- PHPMAILER ----
+require ROOT_PATH . 'app/PHPMailer/src/PHPMailer.php';
+require ROOT_PATH . 'app/PHPMailer/src/SMTP.php';
+require ROOT_PATH . 'app/PHPMailer/src/Exception.php';
+
+// ---- CONTROLLERS ----
 require ROOT_PATH . 'app/Controllers/DashboardController.php';
 require ROOT_PATH . 'app/Controllers/HopitauxController.php';
 require ROOT_PATH . 'app/Controllers/MedecinsController.php';
 require ROOT_PATH . 'app/Controllers/PatientsController.php';
 require ROOT_PATH . 'app/Controllers/RendezVousController.php';
 require ROOT_PATH . 'app/Controllers/PublicController.php';
+require ROOT_PATH . 'app/Controllers/reclamation/usercontroller.php';
+require ROOT_PATH . 'app/Controllers/reclamation/reclamationController.php';
 
 require ROOT_PATH . 'app/helpers.php';
 
@@ -43,7 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $router = new Router();
 
+// ============================================================
 // ---- PUBLIC FRONT OFFICE ----
+// ============================================================
 $router->get('/public', [PublicController::class, 'index']);
 $router->get('/public/doctors', [PublicController::class, 'doctors']);
 $router->get('/public/book', [PublicController::class, 'book']);
@@ -56,8 +75,10 @@ $router->get('/public/portal', [PublicController::class, 'portal']);
 $router->post('/public/portal', [PublicController::class, 'portalSearch']);
 $router->get('/public/map', [PublicController::class, 'map']);
 
-// ---- WEB ROUTES ----
-$router->get('/', [DashboardController::class, 'index']);
+// ============================================================
+// ---- BACK OFFICE ----
+// ============================================================
+$router->get('/', [UserController::class, 'login']);
 $router->get('/dashboard', [DashboardController::class, 'index']);
 
 $router->get('/hopitaux', [HopitauxController::class, 'index']);
@@ -89,9 +110,35 @@ $router->get('/rendezvous/edit/{id}', [RendezVousController::class, 'edit']);
 $router->post('/rendezvous/update/{id}', [RendezVousController::class, 'update']);
 $router->post('/rendezvous/delete/{id}', [RendezVousController::class, 'delete']);
 
-// ---- API ROUTES ----
-// IMPORTANT: Specific routes BEFORE parameterized routes!
+// ============================================================
+// ---- AUTHENTIFICATION ----
+// ============================================================
+$router->get('/login', [UserController::class, 'login']);
+$router->post('/login', [UserController::class, 'doLogin']);
+$router->get('/register', [UserController::class, 'register']);
+$router->post('/register', [UserController::class, 'storeRegister']);
+$router->get('/logout', [UserController::class, 'logout']);
+$router->get('/forgot-password', [UserController::class, 'forgotPassword']);
+$router->post('/forgot-password', [UserController::class, 'sendResetCode']);
+$router->get('/reset-password', [UserController::class, 'resetPassword']);
 
+// ============================================================
+// ---- RECLAMATIONS ----
+// ============================================================
+$router->get('/reclamations/create', [ReclamationController::class, 'create']);
+$router->get('/test-reclamation', function() { echo "Reclamation OK"; });
+$router->post('/reclamations/store', [ReclamationController::class, 'store']);
+$router->get('/reclamations/mes-reclamations', [ReclamationController::class, 'mine']);
+$router->get('/reclamations/show/{id}', [ReclamationController::class, 'showMine']);
+
+$router->get('/admin/reclamations', [ReclamationController::class, 'adminIndex']);
+$router->get('/admin/reclamations/show/{id}', [ReclamationController::class, 'adminShow']);
+$router->post('/admin/reclamations/status/{id}', [ReclamationController::class, 'updateStatus']);
+$router->post('/admin/reclamations/respond/{id}', [ReclamationController::class, 'respond']);
+
+// ============================================================
+// ---- API ----
+// ============================================================
 $router->get('/api/rendezvous', [RendezVousController::class, 'apiIndex']);
 $router->get('/api/rendezvous/stats', [RendezVousController::class, 'apiStats']);
 $router->get('/api/rendezvous/busy-slots', [RendezVousController::class, 'apiBusySlots']);
@@ -125,19 +172,20 @@ $router->post('/api/patients', [PatientsController::class, 'apiStore']);
 $router->put('/api/patients/{id}', [PatientsController::class, 'apiUpdate']);
 $router->delete('/api/patients/{id}', [PatientsController::class, 'apiDelete']);
 
-// ---- PUBLIC API ----
 $router->get('/api/public/doctors', [PublicController::class, 'apiDoctors']);
 $router->get('/api/public/busy-slots', [PublicController::class, 'apiBusySlots']);
 
-// Strip /hospital-management-system-main/public from URI
+// ============================================================
+// ---- DISPATCH ----
+// ============================================================
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$scriptDir = dirname($_SERVER['SCRIPT_NAME']);
-$scriptName = basename($_SERVER['SCRIPT_NAME']);
+$scriptDir  = dirname($_SERVER['SCRIPT_NAME']);
 
 if ($scriptDir !== '/' && $scriptDir !== '\\' && $scriptDir !== '.') {
     $requestUri = preg_replace('#^' . preg_quote($scriptDir, '#') . '#', '', $requestUri);
 }
 
+$scriptName = basename($_SERVER['SCRIPT_NAME']);
 if ($scriptName && strpos($requestUri, $scriptName) === 0) {
     $requestUri = substr($requestUri, strlen($scriptName));
 }

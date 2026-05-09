@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../config.php';
+require_once ROOT_PATH . 'config/database.php';
 
 class Reclamation
 {
@@ -8,7 +8,7 @@ class Reclamation
 
     public function __construct()
     {
-        $this->conn = Database::connect();
+        $this->conn = Database::getInstance();
     }
 
     public function getCategories(): array

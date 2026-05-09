@@ -2,11 +2,11 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
-require_once __DIR__ . '/../PHPMailer/src/SMTP.php';
-require_once __DIR__ . '/../PHPMailer/src/Exception.php';
+require_once ROOT_PATH . 'app/PHPMailer/src/PHPMailer.php';
+require_once ROOT_PATH . 'app/PHPMailer/src/SMTP.php';
+require_once ROOT_PATH . 'app/PHPMailer/src/Exception.php';
 
-require_once __DIR__ . '/../models/user.php';
+require_once ROOT_PATH . 'app/Models/reclamation/user.php';
 
 class UserController
 {
@@ -46,14 +46,14 @@ class UserController
     private function requireLogin(): void
     {
         if (!$this->isLoggedIn()) {
-            $this->redirect('index.php?action=login');
+            $this->redirect('/login');
         }
     }
 
     private function requireAdmin(): void
     {
         if (!$this->isAdmin()) {
-            $this->redirect('index.php?action=login');
+            $this->redirect('/login');
         }
     }
 
@@ -122,7 +122,7 @@ class UserController
         $this->requireAdmin();
 
         $users = $this->userModel->getAll();
-        require __DIR__ . '/../views/BackOffice/index.php';
+        require ROOT_PATH . 'views/BackOffice/index.php';
     }
 
     public function create(): void
@@ -133,7 +133,7 @@ class UserController
         $errors = [];
         $old = [];
 
-        require __DIR__ . '/../views/BackOffice/create.php';
+        require ROOT_PATH . 'views/BackOffice/create.php';
     }
 
     public function store(): void
@@ -154,7 +154,7 @@ class UserController
         $roles = $this->userModel->getRoles();
 
         if (!empty($errors)) {
-            require __DIR__ . '/../views/BackOffice/create.php';
+            require ROOT_PATH . 'views/BackOffice/create.php';
             return;
         }
 
@@ -171,16 +171,16 @@ class UserController
 
         if ($created) {
             $_SESSION['success'] = 'Utilisateur ajouté avec succès.';
-            $this->redirect('index.php?action=index');
+            $this->redirect('/dashboard');
         }
 
         $_SESSION['error'] = 'Erreur lors de l’ajout de l’utilisateur.';
-        $this->redirect('index.php?action=create');
+        $this->redirect('/users/create');
     }
     public function editProfile(): void
 {
     if (!isset($_SESSION['user'])) {
-        header("Location: index.php?action=login");
+        header("Location: /login");
         exit;
     }
 
@@ -190,7 +190,7 @@ class UserController
     $errors = [];
     $old = $user;
 
-    require __DIR__ . '/../views/front/user/editProfile.php';
+    require ROOT_PATH . 'views/front/user/editProfile.php';
 }
 
     public function edit(int $id): void
@@ -200,14 +200,14 @@ class UserController
         $user = $this->userModel->getById($id);
         if (!$user) {
             $_SESSION['error'] = 'Utilisateur introuvable.';
-            $this->redirect('index.php?action=index');
+            $this->redirect('/dashboard');
         }
 
         $roles = $this->userModel->getRoles();
         $errors = [];
         $old = $user;
 
-        require __DIR__ . '/../views/BackOffice/edit.php';
+        require ROOT_PATH . 'views/BackOffice/edit.php';
     }
 
     public function update(int $id): void
@@ -217,7 +217,7 @@ class UserController
         $user = $this->userModel->getById($id);
         if (!$user) {
             $_SESSION['error'] = 'Utilisateur introuvable.';
-            $this->redirect('index.php?action=index');
+            $this->redirect('/dashboard');
         }
 
         $old = [
@@ -235,7 +235,7 @@ class UserController
         $roles = $this->userModel->getRoles();
 
         if (!empty($errors)) {
-            require __DIR__ . '/../views/BackOffice/edit.php';
+            require ROOT_PATH . 'views/BackOffice/edit.php';
             return;
         }
 
@@ -256,11 +256,11 @@ class UserController
 
         if ($updated) {
             $_SESSION['success'] = 'Utilisateur modifié avec succès.';
-            $this->redirect('index.php?action=index');
+            $this->redirect('/dashboard');
         }
 
         $_SESSION['error'] = 'Erreur lors de la modification.';
-        $this->redirect('index.php?action=edit&id=' . $id);
+        $this->redirect('/users/edit/' . $id);
     }
 
     public function delete(int $id): void
@@ -269,13 +269,13 @@ class UserController
 
         if ($this->isLoggedIn() && (int)$_SESSION['user']['idUser'] === $id) {
             $_SESSION['error'] = 'Vous ne pouvez pas supprimer votre propre compte.';
-            $this->redirect('index.php?action=index');
+            $this->redirect('/dashboard');
         }
 
         $user = $this->userModel->getById($id);
         if (!$user) {
             $_SESSION['error'] = 'Utilisateur introuvable.';
-            $this->redirect('index.php?action=index');
+            $this->redirect('/dashboard');
         }
 
         $deleted = $this->userModel->delete($id);
@@ -286,7 +286,7 @@ class UserController
             $_SESSION['error'] = 'Erreur lors de la suppression.';
         }
 
-        $this->redirect('index.php?action=index');
+        $this->redirect('/dashboard');
     }
 private function getIdFromUrl(): ?int
 {
@@ -314,7 +314,7 @@ private function getIdFromUrl(): ?int
         die("Utilisateur introuvable");
     }
 
-    require __DIR__ . '/../views/BackOffice/show.php';
+    require ROOT_PATH . 'views/BackOffice/show.php';
 }
 
 
@@ -328,7 +328,7 @@ private function getIdFromUrl(): ?int
         $errors = [];
         $old = [];
 
-        require __DIR__ . '/../views/front/user/register.php';
+        require ROOT_PATH . 'views/front/user/register.php';
     }
 
     public function storeRegister(): void
@@ -364,7 +364,7 @@ private function getIdFromUrl(): ?int
         }
 
         if (!empty($errors)) {
-            require __DIR__ . '/../views/front/user/register.php';
+            require ROOT_PATH . 'views/front/user/register.php';
             return;
         }
 
@@ -381,17 +381,17 @@ private function getIdFromUrl(): ?int
 
         if ($created) {
             $_SESSION['success'] = 'Inscription réussie. Vous pouvez maintenant vous connecter.';
-            $this->redirect('index.php?action=login');
+            $this->redirect('/login');
         }
 
         $_SESSION['error'] = 'Erreur lors de l’inscription.';
-        $this->redirect('index.php?action=register');
+        $this->redirect('/register');
     }
 
 public function login(): void
 {   
     $errors = [];
-    require __DIR__ . '/../views/front/user/login.php';
+    require ROOT_PATH . 'views/front/user/login.php';
 }
 public function doLogin(): void
 {
@@ -410,7 +410,7 @@ public function doLogin(): void
     }
 
     if (!empty($errors)) {
-        require __DIR__ . '/../views/front/user/login.php';
+        require ROOT_PATH . 'views/front/user/login.php';
         return;
     }
 
@@ -418,13 +418,13 @@ public function doLogin(): void
 
     if (!$user) {
         $errors['general'] = 'Email ou mot de passe incorrect.';
-        require __DIR__ . '/../views/front/user/login.php';
+        require ROOT_PATH . 'views/front/user/login.php';
         return;
     }
 
     if ($user['statutCompte'] !== 'actif') {
         $errors['general'] = 'Votre compte n’est pas actif.';
-        require __DIR__ . '/../views/front/user/login.php';
+        require ROOT_PATH . 'views/front/user/login.php';
         return;
     }
 
@@ -457,27 +457,27 @@ public function doLogin(): void
     }
 
     if ($user['nomRole'] === 'admin') {
-        $this->redirect('index.php?action=index');
+        $this->redirect('/dashboard');
     } else {
-        $this->redirect('index.php?action=profile');
+        $this->redirect('/public/book');
     }
 }
 public function onlineUsers(): void
 {
     if (!isset($_SESSION['user']) || $_SESSION['user']['nomRole'] !== 'admin') {
-        header("Location: index.php?action=login");
+        header("Location: /login");
         exit;
     }
 
     $users = $this->userModel->getOnlineUsers();
 
-    require __DIR__ . '/../views/BackOffice/onlineUsers.php';
+    require ROOT_PATH . 'views/BackOffice/onlineUsers.php';
 }
 
     
 public function forgotPassword()
 {
-    require 'views/front/user/forgotpassword.php';
+    require ROOT_PATH . 'views/front/user/forgotpassword.php';
 }
 
 public function sendResetCode()
@@ -494,7 +494,7 @@ public function sendResetCode()
 
     if (!$user) {
         $errors['email'] = "Email introuvable";
-        require 'views/front/user/forgotpassword.php';
+        require ROOT_PATH . 'views/front/user/forgotpassword.php';
         return;
     }
 
@@ -530,7 +530,7 @@ public function sendResetCode()
 
     } catch (Exception $e) {
         $errors['general'] = "Erreur mail : " . $mail->ErrorInfo;
-        require 'views/front/user/forgotpassword.php';
+        require ROOT_PATH . 'views/front/user/forgotpassword.php';
     }
 }
 
@@ -548,7 +548,7 @@ public function resetPassword()
 
         if ($code != $_SESSION['reset_code']) {
             $errors['code'] = "Code incorrect";
-            require 'views/front/user/resetpassword.php';
+            require ROOT_PATH . 'views/front/user/resetpassword.php';
             return;
         }
 
@@ -561,11 +561,11 @@ public function resetPassword()
 
         session_destroy();
 
-        header("Location: index.php?action=login");
+        header("Location: /login");
         exit;
     }
 
-    require 'views/front/user/resetpassword.php';
+    require ROOT_PATH . 'views/front/user/resetpassword.php';
 }
 
     public function profile(): void
@@ -575,10 +575,10 @@ public function resetPassword()
         $user = $this->userModel->getById((int)$_SESSION['user']['idUser']);
         if (!$user) {
             session_destroy();
-            $this->redirect('index.php?action=login');
+            $this->redirect('/login');
         }
 
-        require __DIR__ . '/../views/front/user/profile.php';
+        require ROOT_PATH . 'views/front/user/profile.php';
     }
 
     public function logout(): void
@@ -586,12 +586,12 @@ public function resetPassword()
         session_unset();
         session_destroy();
 
-        $this->redirect('index.php?action=login');
+        $this->redirect('/login');
     }
     public function updateProfile(): void
 {
     if (!isset($_SESSION['user'])) {
-        header("Location: index.php?action=login");
+        header("Location: /login");
         exit;
     }
 
@@ -620,7 +620,7 @@ public function resetPassword()
     }
 
     if (!empty($errors)) {
-        require __DIR__ . '/../views/front/user/editProfile.php';
+        require ROOT_PATH . 'views/front/user/editProfile.php';
         return;
     }
 
@@ -631,7 +631,7 @@ public function resetPassword()
     $_SESSION['user']['email'] = $email;
     $_SESSION['user']['telephone'] = $telephone;
 
-    header("Location: index.php?action=profile");
+    header("Location: /users/profile");
     exit;
 }
     

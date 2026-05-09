@@ -1,8 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../models/Reclamation.php';
-require_once __DIR__ . '/../models/ReponseReclamation.php';
-require_once __DIR__ . '/../models/ReclamationNotifier.php';
+require_once ROOT_PATH . 'app/Models/reclamation/reclamation.php';
+require_once ROOT_PATH . 'app/Models/reclamation/reponseReclamation.php';
+require_once ROOT_PATH . 'app/Models/reclamation/ReclamationNotifier.php';
 
 class ReclamationController
 {
@@ -28,14 +28,14 @@ class ReclamationController
     private function requireLogin(): void
     {
         if (!isset($_SESSION['user'])) {
-            $this->redirect('index.php?action=login');
+            $this->redirect('/login');
         }
     }
 
     private function requireAdmin(): void
     {
         if (!isset($_SESSION['user']) || $_SESSION['user']['nomRole'] !== 'admin') {
-            $this->redirect('index.php?action=login');
+            $this->redirect('/login');
         }
     }
 
@@ -49,7 +49,7 @@ class ReclamationController
         $errors = [];
         $old = [];
 
-        require __DIR__ . '/../views/front/reclamation/create.php';
+        require ROOT_PATH . 'views/front/New folder/create.php';
     }
 
     public function store(): void
@@ -85,7 +85,7 @@ class ReclamationController
             $services = $this->reclamationModel->getServices();
             $old = $_POST;
 
-            require __DIR__ . '/../views/front/reclamation/create.php';
+            require ROOT_PATH . 'views/front/New folder/create.php';
             return;
         }
 
@@ -97,7 +97,7 @@ class ReclamationController
             $description
         );
 
-        $this->redirect('index.php?action=myReclamations');
+        $this->redirect('/reclamations/mes-reclamations');
     }
 
     public function mine(): void
@@ -107,7 +107,7 @@ class ReclamationController
         $idUser = (int) $_SESSION['user']['idUser'];
         $reclamations = $this->reclamationModel->getByUser($idUser);
 
-        require __DIR__ . '/../views/front/reclamation/mine.php';
+        require ROOT_PATH . 'views/front/New folder/mine.php';
     }
 
     public function showMine(int $idReclamation): void
@@ -117,12 +117,12 @@ class ReclamationController
         $reclamation = $this->reclamationModel->getById($idReclamation);
 
         if (!$reclamation || $reclamation['idUser'] != $_SESSION['user']['idUser']) {
-            $this->redirect('index.php?action=myReclamations');
+            $this->redirect('/reclamations/mes-reclamations');
         }
 
         $reponses = $this->reponseModel->getByReclamation($idReclamation);
 
-        require __DIR__ . '/../views/front/reclamation/show.php';
+        require ROOT_PATH . 'views/front/New folder/show.php';
     }
 
     public function adminIndex(): void
@@ -131,7 +131,7 @@ class ReclamationController
 
         $reclamations = $this->reclamationModel->getAll();
 
-        require __DIR__ . '/../views/BackOffice/reclamation/index.php';
+        require ROOT_PATH . 'views/BackOffice/index.php';
     }
 
     public function adminShow(int $idReclamation): void
@@ -141,7 +141,7 @@ class ReclamationController
     $reclamation = $this->reclamationModel->getById($idReclamation);
 
     if (!$reclamation) {
-        $this->redirect('index.php?action=adminReclamations');
+        $this->redirect('/admin/reclamations');
     }
 
     $reponses = $this->reponseModel->getByReclamation($idReclamation);
@@ -158,7 +158,7 @@ class ReclamationController
         && $currentStatut === 'en_cours'
         && $reponseCount === 0;
 
-    require __DIR__ . '/../views/BackOffice/reclamation/show.php';
+    require ROOT_PATH . 'views/BackOffice/show.php';
 }
 public function updateStatus(int $idReclamation): void
 {
@@ -167,7 +167,7 @@ public function updateStatus(int $idReclamation): void
     $reclamation = $this->reclamationModel->getById($idReclamation);
 
     if (!$reclamation) {
-        $this->redirect('index.php?action=adminReclamations');
+        $this->redirect('/admin/reclamations');
     }
 
     $currentStatut = $reclamation['statutReclamation'];
@@ -175,23 +175,23 @@ public function updateStatus(int $idReclamation): void
 
     if (in_array($currentStatut, ['resolue', 'rejetee'])) {
         $_SESSION['error'] = "Cette réclamation est déjà clôturée.";
-        $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+        $this->redirect('/admin/reclamations/show/' . $idReclamation);
     }
 
     if ($currentStatut === 'ouverte' && $newStatut !== 'en_cours') {
         $_SESSION['error'] = "Vous devez d'abord passer la réclamation en cours.";
-        $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+        $this->redirect('/admin/reclamations/show/' . $idReclamation);
     }
 
     if ($currentStatut === 'en_cours' && !in_array($newStatut, ['resolue', 'rejetee'])) {
         $_SESSION['error'] = "Après en cours, vous devez choisir résolue ou rejetée.";
-        $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+        $this->redirect('/admin/reclamations/show/' . $idReclamation);
     }
 
     $this->reclamationModel->updateStatut($idReclamation, $newStatut);
 
     $_SESSION['success'] = "Statut mis à jour avec succès.";
-    $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+    $this->redirect('/admin/reclamations/show/' . $idReclamation);
 }
 public function respond(int $idReclamation): void
 {
@@ -200,7 +200,7 @@ public function respond(int $idReclamation): void
     $reclamation = $this->reclamationModel->getById($idReclamation);
 
     if (!$reclamation) {
-        $this->redirect('index.php?action=adminReclamations');
+        $this->redirect('/admin/reclamations');
     }
 
     $currentStatut = $reclamation['statutReclamation'];
@@ -209,34 +209,34 @@ public function respond(int $idReclamation): void
 
     if (in_array($currentStatut, ['resolue', 'rejetee'])) {
         $_SESSION['error'] = "Cette réclamation est déjà clôturée.";
-        $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+        $this->redirect('/admin/reclamations/show/' . $idReclamation);
     }
 
     if ($currentStatut !== 'en_cours') {
         $_SESSION['error'] = "Vous devez d'abord passer la réclamation en cours avant de répondre.";
-        $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+        $this->redirect('/admin/reclamations/show/' . $idReclamation);
     }
 
     if ($this->reponseModel->countByReclamation($idReclamation) > 0) {
         $_SESSION['error'] = "Une réponse existe déjà pour cette réclamation.";
-        $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+        $this->redirect('/admin/reclamations/show/' . $idReclamation);
     }
 
     if ($contenu === '') {
         $_SESSION['error'] = "La réponse est obligatoire.";
-        $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+        $this->redirect('/admin/reclamations/show/' . $idReclamation);
     }
 
     if (!in_array($decision, ['resolue', 'rejetee'])) {
         $_SESSION['error'] = "Veuillez choisir une décision valide.";
-        $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+        $this->redirect('/admin/reclamations/show/' . $idReclamation);
     }
 
     $this->reponseModel->create($idReclamation, $contenu);
     $this->reclamationModel->updateStatut($idReclamation, $decision);
 
     $_SESSION['success'] = "Réponse enregistrée et réclamation clôturée.";
-    $this->redirect('index.php?action=showReclamation&id=' . $idReclamation);
+    $this->redirect('/admin/reclamations/show/' . $idReclamation);
 }
     
     
