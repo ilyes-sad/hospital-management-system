@@ -701,7 +701,18 @@ tbody tr:hover { background: #F5F9FF; }
 
 /* ===== DETAILS CARD ===== */
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.detail-item {}
+.detail-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.detail-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
 .detail-key { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 3px; }
 .detail-val { font-size: 0.9rem; color: var(--text-primary); font-weight: 500; }
 

@@ -21,12 +21,21 @@ require ROOT_PATH . 'app/Models/Hopital.php';
 require ROOT_PATH . 'app/Models/Medecin.php';
 require ROOT_PATH . 'app/Models/Patient.php';
 require ROOT_PATH . 'app/Models/RendezVous.php';
+require ROOT_PATH . 'app/Models/StatutReclamation.php';
+require ROOT_PATH . 'app/Models/PrioriteReclamation.php';
+require ROOT_PATH . 'app/Models/ServiceHospitalier.php';
+require ROOT_PATH . 'app/Models/Reclamation.php';
+require ROOT_PATH . 'app/Models/ReponseReclamation.php';
+require ROOT_PATH . 'app/Models/ReclamationNotifier.php';
+require ROOT_PATH . 'app/Models/ReclamationLifecycle.php';
 
 require ROOT_PATH . 'app/Controllers/DashboardController.php';
 require ROOT_PATH . 'app/Controllers/HopitauxController.php';
 require ROOT_PATH . 'app/Controllers/MedecinsController.php';
 require ROOT_PATH . 'app/Controllers/PatientsController.php';
 require ROOT_PATH . 'app/Controllers/RendezVousController.php';
+require ROOT_PATH . 'app/Controllers/ReclamationController.php';
+require ROOT_PATH . 'app/Controllers/ReponseReclamationController.php';
 
 require ROOT_PATH . 'app/helpers.php';
 
@@ -106,6 +115,29 @@ $router->get('/api/patients/{id}', [PatientsController::class, 'apiShow']);
 $router->post('/api/patients', [PatientsController::class, 'apiStore']);
 $router->put('/api/patients/{id}', [PatientsController::class, 'apiUpdate']);
 $router->delete('/api/patients/{id}', [PatientsController::class, 'apiDelete']);
+
+// ---- RECLAMATION ROUTES ----
+$router->get('/reclamations/new',                    [ReclamationController::class, 'showNew']);
+$router->post('/reclamations/save',                  [ReclamationController::class, 'save']);
+$router->get('/reclamations/stats',                  [ReclamationController::class, 'adminDashboard']);
+$router->get('/reclamations/overdue',                [ReclamationController::class, 'adminOverdue']);
+$router->post('/reclamations/overdue/send-reminders',[ReclamationController::class, 'adminSendAllReminders']);
+$router->get('/reclamations',                        [ReclamationController::class, 'adminList']);
+$router->get('/reclamations/{id}',                   [ReclamationController::class, 'adminDetail']);
+$router->get('/reclamations/{id}/edit',              [ReclamationController::class, 'adminEdit']);
+$router->post('/reclamations/{id}/edit',             [ReclamationController::class, 'adminEdit']);
+$router->post('/reclamations/{id}/status',           [ReclamationController::class, 'adminUpdateStatus']);
+$router->post('/reclamations/{id}/priority',         [ReclamationController::class, 'adminUpdatePriority']);
+$router->post('/reclamations/{id}/respond',          [ReclamationController::class, 'adminRespond']);
+$router->post('/reclamations/{id}/send-reminder',    [ReclamationController::class, 'adminSendReminder']);
+$router->post('/reclamations/{id}/delete',           [ReclamationController::class, 'adminDelete']);
+
+// ---- REPONSE ROUTES ----
+$router->get('/reponses',                      [ReponseReclamationController::class, 'adminList']);
+$router->get('/reponses/{id}',                 [ReponseReclamationController::class, 'adminDetail']);
+$router->get('/reponses/{id}/edit',            [ReponseReclamationController::class, 'adminEdit']);
+$router->post('/reponses/{id}/update',         [ReponseReclamationController::class, 'adminUpdate']);
+$router->post('/reponses/{id}/delete',         [ReponseReclamationController::class, 'adminDelete']);
 
 // Strip /medapp2/public from URI
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
