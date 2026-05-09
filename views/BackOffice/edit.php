@@ -7,6 +7,11 @@ require __DIR__ . '/../../templates/back/header.php';
 
 $data = $old ?? $user ?? [];
 ?>
+<?php
+$roles = $roles ?? [];
+$errors = $errors ?? [];
+$old = $old ?? [];
+?>
 
 <div class="main-content">
     <header class="topbar">

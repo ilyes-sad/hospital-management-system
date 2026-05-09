@@ -1,10 +1,12 @@
     <?php
 
 session_start();
-
-require_once __DIR__ . '/controllers/UserController.php';
+require_once __DIR__ . '/controllers/reclamationController.php';
+require_once __DIR__ . '/controllers/userController.php';
 
 $controller = new UserController();
+
+$reclamationController = new ReclamationController();
 
 // Récupérer l'action depuis l'URL
 $action = $_GET['action'] ?? null;
@@ -36,7 +38,7 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
     switch ($action) {
 
-        // BACKOFFICE
+        // BACKOFFICE USER
         case 'index':
             $controller->index();
             break;
@@ -48,11 +50,22 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
         case 'store':
             $controller->store();
             break;
+            case 'updateProfile':
+    $controller->updateProfile();
+    break;
+    case 'editProfile':
+    $controller->editProfile();
+    break;
 
         case 'edit':
-            $controller->edit($id);
-            break;
+    $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
+    if ($id <= 0) {
+        header("Location: index.php?action=index");
+        exit;
+    }
+    $controller->edit($id);
+    break;
         case 'update':
             $controller->update($id);
             break;
@@ -100,15 +113,56 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
         $controller = new UserController();
         $controller->sendResetCode();
         break;
+        
+        case 'onlineUsers':
+        $controller->onlineUsers();
+        break;
 
         case 'resetPassword':
         require_once 'controllers/UserController.php';
         $controller = new UserController();
         $controller->resetPassword();
         break;
+        //RECLAMATIONS
+        case 'newReclamation':
+        $reclamationController->create();
+        break;
+
+        case 'storeReclamation':
+        $reclamationController->store();
+        break;
+
+        case 'myReclamations':
+        $reclamationController->mine();
+        break;
+
+        case 'showMyReclamation':
+        $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+    $reclamationController->showMine($id);
+    break;
+
+case 'adminReclamations':
+    $reclamationController->adminIndex();
+    break;
+
+case 'showReclamation':
+    $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+    $reclamationController->adminShow($id);
+    break;
+
+case 'respondReclamation':
+    $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+    $reclamationController->respond($id);
+    break;
+    case 'updateReclamationStatus':
+    $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+    $reclamationController->updateStatus($id);
+    break;
 
         default:
             echo "Action non reconnue.";
             break;
+        
+        
 
     }

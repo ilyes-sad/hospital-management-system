@@ -175,7 +175,7 @@ function initials(string $nom, string $prenom): string
                     <option value="Patient">Patient</option>
                     <option value="Medecin">Médecin</option>
                     <option value="admin">Administrateur</option>
-                    <option value="AgentHospitalier">Agent hospitalier</option>
+                    <option value="agent_hospitalier">Agent hospitalier</option>
                 </select>
 
                 <select class="filter-select" id="statutFilter" name="statut">

@@ -115,7 +115,7 @@ if ($statut === 'bloque') {
                 </div>
 
                 <div class="quick-actions">
-                    <a href="index.php?action=edit" class="quick-action">
+                    <a href="index.php?action=editProfile" class="quick-action">
                         <div class="quick-action-icon" style="background: var(--accent-light); color: var(--accent-dark);">
                             👤
                         </div>
@@ -145,7 +145,7 @@ if ($statut === 'bloque') {
                         </div>
                     </a>
 
-                    <a href="#" class="quick-action">
+                    <a href="index.php?action=myReclamations" class="quick-action">
                         <div class="quick-action-icon" style="background: var(--danger-light); color: var(--danger);">
                             ⚠️
                         </div>

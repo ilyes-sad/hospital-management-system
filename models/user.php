@@ -123,7 +123,44 @@ public function getById(int $id): ?array
             ':idRole' => $idRole
         ]);
     }
-    public static function findByEmail($email)
+    public function deleteRememberTokens($userId): bool
+{
+    $stmt = $this->conn->prepare("
+        DELETE FROM remember_tokens WHERE user_id = ?
+    ");
+    return $stmt->execute([$userId]);
+}
+public function saveRememberToken($userId, $selector, $tokenHash, $expires): bool
+{
+    $stmt = $this->conn->prepare("
+        INSERT INTO remember_tokens (user_id, selector, token_hash, expires_at)
+        VALUES (?, ?, ?, ?)
+    ");
+
+    return $stmt->execute([
+        $userId,
+        $selector,
+        $tokenHash,
+        $expires
+    ]);
+}
+public function updateProfile($id, $nom, $prenom, $email, $telephone): bool
+{
+    $stmt = $this->conn->prepare("
+        UPDATE users
+        SET nom = ?, prenom = ?, email = ?, telephone = ?
+        WHERE idUser = ?
+    ");
+
+    return $stmt->execute([
+        $nom,
+        $prenom,
+        $email,
+        $telephone,
+        $id
+    ]);
+}
+public static function findByEmail($email)
 {
     $db = Database::connect();
 
@@ -226,4 +263,17 @@ public function getById(int $id): ?array
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    public function getOnlineUsers(): array
+{
+    $stmt = $this->conn->prepare("
+        SELECT idUser, nom, prenom, email, last_activity
+        FROM users
+        WHERE last_activity >= NOW() - INTERVAL 5 MINUTE
+        ORDER BY last_activity DESC
+    ");
+
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 }
