@@ -10,6 +10,22 @@ class User
     public function __construct()
     {
         $this->conn = Database::getInstance();
+        $this->ensureRolesTableExists();
+    }
+    
+    private function ensureRolesTableExists(): void
+    {
+        try {
+            $this->conn->query("SELECT 1 FROM roles LIMIT 1");
+        } catch (PDOException $e) {
+            $this->conn->exec("
+                CREATE TABLE IF NOT EXISTS roles (
+                    idRole INT AUTO_INCREMENT PRIMARY KEY,
+                    nomRole VARCHAR(50) NOT NULL UNIQUE
+                )
+            ");
+            $this->conn->exec("INSERT INTO roles (nomRole) VALUES ('admin'), ('Patient'), ('Medecin')");
+        }
     }
     
 
@@ -215,7 +231,7 @@ public static function findByEmail($email)
         $sql = "SELECT u.idUser, u.nom, u.prenom, u.email, u.motDePasse, 
                        u.statutCompte, u.idRole, r.nomRole
                 FROM {$this->table} u
-                INNER JOIN role r ON u.idRole = r.idRole
+                LEFT JOIN roles r ON u.idRole = r.idRole
                 WHERE u.email = :email
                 LIMIT 1";
 
@@ -226,8 +242,12 @@ public static function findByEmail($email)
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user) {
+            error_log("User not found for email: $email");
             return false;
         }
+        
+        error_log("User found, checking password...");
+        error_log("Stored hash: " . $user['motDePasse']);
 
         if (!password_verify($motDePasse, $user['motDePasse'])) {
             return false;
@@ -238,6 +258,9 @@ public static function findByEmail($email)
 
     public function emailExists(string $email, ?int $excludeId = null): bool
     {
+        // Debug
+        file_put_contents(__DIR__ . '/../../email_debug.log', "Checking email: $email, excludeId: $excludeId\n", FILE_APPEND);
+        
         if ($excludeId !== null) {
             $sql = "SELECT COUNT(*) FROM {$this->table}
                     WHERE email = :email AND idUser != :id";
@@ -252,7 +275,9 @@ public static function findByEmail($email)
         }
 
         $stmt->execute();
-        return (int) $stmt->fetchColumn() > 0;
+        $result = (int) $stmt->fetchColumn();
+        file_put_contents(__DIR__ . '/../../email_debug.log', "Result: $result\n", FILE_APPEND);
+        return $result > 0;
     }
 
     public function getRoles(): array

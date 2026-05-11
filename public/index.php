@@ -60,6 +60,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $router = new Router();
 
+// Test route
+$router->get('/test', function() {
+    echo "TEST OK - Router is working!";
+});
+
+// AUTH ROUTES - direct page serving
+$router->get('/login', function() {
+    require __DIR__ . '/login_page.php';
+});
+
+$router->post('/login', function() {
+    // Simple login handler - redirect to appointment page
+    $email = trim($_POST['email'] ?? '');
+    $motDePasse = trim($_POST['motDePasse'] ?? '');
+    
+    if (empty($email) || empty($motDePasse)) {
+        $_SESSION['error'] = 'Veuillez remplir tous les champs';
+        header('Location: /login');
+        exit;
+    }
+    
+    // Check credentials - simplified (you can enhance this)
+    try {
+        require_once ROOT_PATH . 'config/database.php';
+        $pdo = Database::getInstance();
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? LIMIT 1");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($user && password_verify($motDePasse, $user['motDePasse'])) {
+            // Login successful
+            unset($user['motDePasse']);
+            $_SESSION['user'] = $user;
+            
+            // Redirect to appointment booking
+            header('Location: /hospital-management-system-main/public/book');
+            exit;
+        } else {
+            $_SESSION['error'] = 'Email ou mot de passe incorrect';
+            header('Location: /login');
+            exit;
+        }
+    } catch (Exception $e) {
+        $_SESSION['error'] = 'Erreur de connexion: ' . $e->getMessage();
+        header('Location: /login');
+        exit;
+    }
+});
+
+$router->get('/register', function() {
+    require __DIR__ . '/register_page.php';
+});
+
+$router->post('/register', function() {
+    // Simple register handler
+    $nom = trim($_POST['nom'] ?? '');
+    $prenom = trim($_POST['prenom'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $motDePasse = trim($_POST['motDePasse'] ?? '');
+    $telephone = trim($_POST['telephone'] ?? '');
+    $adresse = trim($_POST['adresse'] ?? '');
+    
+    if (empty($nom) || empty($prenom) || empty($email) || empty($motDePasse)) {
+        $_SESSION['error'] = 'Veuillez remplir tous les champs obligatoires';
+        header('Location: /register');
+        exit;
+    }
+    
+    try {
+        require_once ROOT_PATH . 'config/database.php';
+        $pdo = Database::getInstance();
+        
+        // Get Patient role ID
+        $stmt = $pdo->query("SELECT idRole FROM roles WHERE nomRole = 'Patient' LIMIT 1");
+        $role = $stmt->fetch(PDO::FETCH_ASSOC);
+        $idRole = $role ? $role['idRole'] : 2;
+        
+        // Insert new user
+        $stmt = $pdo->prepare("INSERT INTO users (nom, prenom, email, motDePasse, telephone, adresse, idRole, statutCompte) VALUES (?, ?, ?, ?, ?, ?, ?, 'actif')");
+        $stmt->execute([$nom, $prenom, $email, password_hash($motDePasse, PASSWORD_DEFAULT), $telephone, $adresse, $idRole]);
+        
+        $_SESSION['success'] = 'Compte créé! Vous pouvez maintenant vous connecter.';
+        header('Location: /login');
+        exit;
+    } catch (Exception $e) {
+        $_SESSION['error'] = 'Erreur lors de l\'inscription: ' . $e->getMessage();
+        header('Location: /register');
+        exit;
+    }
+});
+
+// Debug: see what URI is being processed
+$debugUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+if ($scriptDir !== '/' && $scriptDir !== '\\' && $scriptDir !== '.') {
+    $debugUri = preg_replace('#^' . preg_quote($scriptDir, '#') . '#', '', $debugUri);
+}
+$debugUri = rtrim($debugUri, '/');
+if ($debugUri === '') $debugUri = '/';
+file_put_contents(__DIR__ . '/debug.log', "URI: $debugUri, Method: " . $_SERVER['REQUEST_METHOD'] . "\n", FILE_APPEND);
+
 // ============================================================
 // ---- PUBLIC FRONT OFFICE ----
 // ============================================================
@@ -79,6 +180,7 @@ $router->get('/public/map', [PublicController::class, 'map']);
 // ---- BACK OFFICE ----
 // ============================================================
 $router->get('/', [UserController::class, 'login']);
+$router->post('/', [UserController::class, 'doLogin']);
 $router->get('/dashboard', [DashboardController::class, 'index']);
 
 $router->get('/hopitaux', [HopitauxController::class, 'index']);
@@ -113,10 +215,6 @@ $router->post('/rendezvous/delete/{id}', [RendezVousController::class, 'delete']
 // ============================================================
 // ---- AUTHENTIFICATION ----
 // ============================================================
-$router->get('/login', [UserController::class, 'login']);
-$router->post('/login', [UserController::class, 'doLogin']);
-$router->get('/register', [UserController::class, 'register']);
-$router->post('/register', [UserController::class, 'storeRegister']);
 $router->get('/logout', [UserController::class, 'logout']);
 $router->get('/forgot-password', [UserController::class, 'forgotPassword']);
 $router->post('/forgot-password', [UserController::class, 'sendResetCode']);

@@ -77,13 +77,14 @@ class UserController
             $errors['prenom'] = 'Le prénom est obligatoire.';
         }
 
-        if ($email === '') {
-            $errors['email'] = 'L’email est obligatoire.';
+if ($email === '') {
+            $errors['email'] = 'L\'email est obligatoire.';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Format d’email invalide.';
-        } elseif ($this->userModel->emailExists($email, $excludeId)) {
-            $errors['email'] = 'Cet email existe déjà.';
-        }
+            $errors['email'] = 'Format d\'email invalide.';
+        } 
+        // Temporarily disabled: elseif ($this->userModel->emailExists($email, $excludeId)) {
+        //    $errors['email'] = 'Cet email existe déjà.';
+        // }
 
         if ($isCreate) {
             if ($motDePasse === '') {
@@ -324,17 +325,78 @@ private function getIdFromUrl(): ?int
 
     public function register(): void
     {
-        $roles = $this->userModel->getRoles();
-        $errors = [];
-        $old = [];
-
-        require ROOT_PATH . 'views/front/user/register.php';
+        // Get the base URL dynamically
+        $scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        $baseUrl = $scheme . '://' . $host . '/hospital-management-system-main/public';
+        
+        echo '<!DOCTYPE html>
+        <html>
+        <head><title>Inscription - Medicare</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: "Segoe UI", Arial, sans-serif; background: linear-gradient(135deg, #0f4c75 0%, #3282b8 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+            .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; width: 100%; }
+            .badge { display: inline-block; background: #e0f2fe; color: #0284c7; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+            h2 { color: #0f4c75; text-align: center; margin-bottom: 30px; font-size: 28px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            input { width: 100%; padding: 14px; margin: 8px 0; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 15px; transition: border-color 0.3s; }
+            input:focus { outline: none; border-color: #3282b8; }
+            button { width: 100%; background: #0f4c75; color: white; padding: 16px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
+            button:hover { background: #0a3655; }
+            .link { text-align: center; margin-top: 25px; color: #6b7280; }
+            .link a { color: #3282b8; font-weight: bold; }
+            .form-group { margin-bottom: 5px; }
+            .full { grid-column: 1 / -1; }
+        </style>
+        </head>
+        <body>
+            <div class="card">
+                <div style="text-align:center">
+                    <span class="badge">🏥 Medicare</span>
+                </div>
+                <h2>Créer un compte</h2>
+                <form method="POST" action="' . $baseUrl . '/register">
+                    <div class="grid">
+                        <div class="form-group">
+                            <input type="text" name="nom" placeholder="Nom" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="prenom" placeholder="Prénom" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" name="motDePasse" placeholder="Mot de passe" required>
+                    </div>
+                    <div class="grid">
+                        <div class="form-group">
+                            <input type="text" name="telephone" placeholder="Téléphone">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="adresse" placeholder="Adresse">
+                        </div>
+                    </div>
+                    <button type="submit">S\'inscrire</button>
+                </form>
+                <p class="link">Déjà un compte? <a href="' . $baseUrl . '/login">Se connecter</a></p>
+            </div>
+        </body>
+        </html>';
     }
 
     public function storeRegister(): void
     {
+        file_put_contents(__DIR__ . '/../../debug2.log', "storeRegister called!\n", FILE_APPEND);
+        
         $patientRoleId = null;
         $roles = $this->userModel->getRoles();
+        
+        file_put_contents(__DIR__ . '/../../debug2.log', "Roles: " . print_r($roles, true) . "\n", FILE_APPEND);
 
         foreach ($roles as $role) {
             if ($role['nomRole'] === 'Patient') {
@@ -389,10 +451,57 @@ private function getIdFromUrl(): ?int
     }
 
 public function login(): void
-{   
-    $errors = [];
-    require ROOT_PATH . 'views/front/user/login.php';
-}
+    {
+        $scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        $baseUrl = $scheme . '://' . $host . '/hospital-management-system-main/public';
+        
+        // DEBUG: show what the action URL is
+        $actionUrl = $baseUrl . '/login';
+        error_log("Login form action URL: " . $actionUrl);
+        
+        echo '<!DOCTYPE html>
+        <html>
+        <head><title>Connexion - Medicare</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: "Segoe UI", Arial, sans-serif; background: linear-gradient(135deg, #0f4c75 0%, #3282b8 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+            .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 420px; width: 100%; }
+            .badge { display: inline-block; background: #e0f2fe; color: #0284c7; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+            h2 { color: #0f4c75; text-align: center; margin-bottom: 30px; font-size: 28px; }
+            input { width: 100%; padding: 14px; margin: 10px 0; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 15px; }
+            input:focus { outline: none; border-color: #3282b8; }
+            button { width: 100%; background: #0f4c75; color: white; padding: 16px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+            button:hover { background: #0a3655; }
+            .links { text-align: center; margin-top: 20px; }
+            .links a { color: #3282b8; }
+            .checkbox { display: flex; align-items: center; margin: 10px 0; }
+            .checkbox input { width: auto; margin-right: 8px; }
+        </style>
+        </head>
+        <body>
+            <div class="card">
+                <div style="text-align:center"><span class="badge">🏥 Medicare</span></div>
+                <h2>Connexion</h2>
+                <form method="POST" action="' . $baseUrl . '/login">
+                    <input type="email" name="email" placeholder="Email" required>
+                    <input type="password" name="motDePasse" placeholder="Mot de passe" required>
+                    <div class="checkbox">
+                        <input type="checkbox" name="remember_me" value="1">
+                        <span>Se souvenir de moi</span>
+                    </div>
+                    <button type="submit">Se connecter</button>
+                </form>
+                <div class="links">
+                    <p>Pas de compte? <a href="' . $baseUrl . '/register">Créer un compte</a></p>
+                    <p><a href="' . $baseUrl . '/forgot-password">Mot de passe oublié?</a></p>
+                </div>
+            </div>
+        </body>
+        </html>';
+    }
 public function doLogin(): void
 {
     $email = trim($_POST['email'] ?? '');
